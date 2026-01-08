@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "360895044494",
+    "project_id": "anontalk-1",
+    "storage_bucket": "anontalk-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:360895044494:android:bd892a8a8e1b8ecff5a2df",
+        "android_client_info": {
+          "package_name": "com.example.anontalk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVNesnQG_G8vw5IY1xZ1VOkuDhCU4cKVE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
