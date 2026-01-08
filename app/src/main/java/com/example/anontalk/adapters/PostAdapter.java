@@ -141,7 +141,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvLikes = itemView.findViewById(R.id.tvLikes);
             btnLike = itemView.findViewById(R.id.btnLike);
             btnComment = itemView.findViewById(R.id.btnComment);
-            tvComments = itemView.findViewById(R.id.tvComments); // 🔥 THIS WAS NULL
+            tvComments = itemView.findViewById(R.id.tvComments); // 🔥 THIS WAS NULl
 
 
         }
