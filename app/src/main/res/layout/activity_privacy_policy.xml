@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_title"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"/>
+
+        <!-- Last Updated -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_updated"
+            android:textSize="12sp"
+            android:textColor="#888888"
+            android:paddingBottom="16dp"/>
+
+        <!-- Intro -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_intro"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 1 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_1_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_1_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 2 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_2_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_2_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 3 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_3_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_3_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 4 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_4_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_4_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 5 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_5_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_5_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 6 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_6_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_6_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 7 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_7_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_7_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 8 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_8_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_8_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Section 9 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_9_title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingBottom="6dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_section_9_body"
+            android:textSize="14sp"
+            android:lineSpacingExtra="6dp"
+            android:paddingBottom="16dp"/>
+
+        <!-- Footer -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_footer_note"
+            android:textSize="13sp"
+            android:textStyle="italic"
+            android:textColor="#666666"
+            android:paddingTop="8dp"/>
+
+
+    </LinearLayout>
+</ScrollView>

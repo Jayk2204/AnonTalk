@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <uses-permission android:name="android.permission.INTERNET"/>
 
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="true"
@@ -15,36 +15,50 @@
         android:theme="@style/Theme.AnonTalk"
         tools:targetApi="31">
 
-        <!-- Home Screen -->
         <activity
-            android:name=".activities.HomeActivity"
-            android:exported="false" />
-
-        <!-- Auth Screen (Launcher) -->
-        <activity
-            android:name=".activities.AuthActivity"
+            android:name=".activities.SplashActivity"
             android:exported="true">
-
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
 
-        <!-- (Optional) Keep MainActivity if you still use it -->
+
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.AuthActivity"
             android:exported="false" />
+
+
+        <!-- AUTH (NOT LAUNCHER) -->
+        <activity
+            android:name=".activities.AuthActivity"
+            android:exported="false" />
+
+        <!-- TERMS & CONDITIONS -->
+        <activity
+            android:name=".activities.TermsActivity"
+            android:exported="false" />
+
+        <!-- PRIVACY POLICY -->
+        <activity
+            android:name=".activities.PrivacyPolicyActivity"
+            android:exported="false" />
+
+        <!-- HOME -->
+        <activity
+            android:name=".activities.HomeActivity"
+            android:exported="false" />
+
+        <!-- CREATE POST -->
         <activity
             android:name=".activities.PostActivity"
-            android:exported="false"/>
+            android:exported="false" />
+
+        <!-- COMMENTS -->
         <activity
             android:name=".activities.CommentsActivity"
             android:exported="false" />
 
-
     </application>
-
 </manifest>

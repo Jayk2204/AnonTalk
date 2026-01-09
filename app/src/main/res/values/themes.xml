@@ -8,4 +8,12 @@
         <item name="android:textColor">@color/textWhite</item>
     </style>
 
+    <!-- SPLASH THEME -->
+    <style name="Theme.AnonTalk.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@drawable/bg_splash_gradient</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="postSplashScreenTheme">@style/Theme.AnonTalk</item>
+    </style>
+
 </resources>

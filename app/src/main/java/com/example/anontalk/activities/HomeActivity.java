@@ -1,68 +1,55 @@
 package com.example.anontalk.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
 
 import com.example.anontalk.R;
-import com.example.anontalk.adapters.PostAdapter;
-import com.example.anontalk.models.PostModel;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class HomeActivity extends AppCompatActivity {
 
-    private RecyclerView rvPosts;
-    private PostAdapter adapter;
-    private List<PostModel> list;
+    BottomNavigationView bottomNav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        rvPosts = findViewById(R.id.rvPosts);
-        rvPosts.setLayoutManager(new LinearLayoutManager(this));
+        bottomNav = findViewById(R.id.bottom_nav);
 
-        list = new ArrayList<>();
-        adapter = new PostAdapter(list);
-        rvPosts.setAdapter(adapter);
+        // Load default fragment
+        if (savedInstanceState == null) {
+            loadFragment(new FeedFragment());
+        }
 
-        loadPosts();
-        FloatingActionButton fabAddPost = findViewById(R.id.fabAddPost);
+        bottomNav.setOnItemSelectedListener(item -> {
+            Fragment fragment = null;
 
-        fabAddPost.setOnClickListener(v -> {
-            startActivity(new Intent(HomeActivity.this, PostActivity.class));
+            int id = item.getItemId();
+
+            if (id == R.id.nav_home) {
+                fragment = new FeedFragment();
+            } else if (id == R.id.nav_saved) {
+                fragment = new SavedFragment();
+            } else if (id == R.id.nav_trending) {
+                fragment = new TrendingFragment();
+            }
+
+            if (fragment != null) {
+                loadFragment(fragment);
+            }
+
+            return true;
         });
-
     }
 
-    private void loadPosts() {
-        FirebaseFirestore.getInstance()
-                .collection("posts")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null) return;
-
-                    list.clear();
-                    for (var doc : value.getDocuments()) {
-                        PostModel post = doc.toObject(PostModel.class);
-                        if (post != null) {
-                            post.setId(doc.getId());   // 🔥 SET DOCUMENT ID
-                            list.add(post);
-                        }
-                    }
-                    adapter.notifyDataSetChanged();
-
-                });
-
+    private void loadFragment(@NonNull Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
     }
-
 }

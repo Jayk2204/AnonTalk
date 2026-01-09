@@ -1,6 +1,7 @@
 package com.example.anontalk.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +23,24 @@ public class AuthActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // 🔴 STEP 1: TERMS CHECK (ABSOLUTELY FIRST)
+        SharedPreferences prefs =
+                getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+
+        boolean termsAccepted =
+                prefs.getBoolean("TERMS_ACCEPTED", false);
+
+        if (!termsAccepted) {
+            startActivity(new Intent(
+                    AuthActivity.this,
+                    TermsActivity.class
+            ));
+            finish();
+            return; // 🚫 STOP EXECUTION
+        }
+
+        // 🔵 STEP 2: NOW inflate UI
         setContentView(R.layout.activity_auth);
 
         btnAnon = findViewById(R.id.btnAnonLogin);
@@ -29,10 +48,13 @@ public class AuthActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
 
-        // If already logged in → go directly to Home
+        // 🔵 STEP 3: USER CHECK
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser != null) {
-            startActivity(new Intent(AuthActivity.this, HomeActivity.class));
+            startActivity(new Intent(
+                    AuthActivity.this,
+                    HomeActivity.class
+            ));
             finish();
             return;
         }
@@ -50,17 +72,22 @@ public class AuthActivity extends AppCompatActivity {
                     btnAnon.setEnabled(true);
 
                     if (task.isSuccessful()) {
-                        startActivity(new Intent(AuthActivity.this, HomeActivity.class));
+                        startActivity(new Intent(
+                                AuthActivity.this,
+                                HomeActivity.class
+                        ));
                         finish();
                     } else {
-                        String error = task.getException() != null ?
-                                task.getException().getMessage() : "Unknown error";
+                        String error = task.getException() != null
+                                ? task.getException().getMessage()
+                                : "Unknown error";
 
-                        Toast.makeText(AuthActivity.this,
+                        Toast.makeText(
+                                AuthActivity.this,
                                 "Login failed: " + error,
-                                Toast.LENGTH_LONG).show();
+                                Toast.LENGTH_LONG
+                        ).show();
                     }
                 });
     }
-
 }

@@ -19,20 +19,19 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder> {
 
-    private List<PostModel> list;
-    private FirebaseFirestore db;
-    private String uid;
+    private final List<PostModel> list;
+    private final FirebaseFirestore db;
+    private final String uid;
 
+    // ✅ SINGLE-CONSTRUCTOR (MATCHES FeedFragment)
     public PostAdapter(List<PostModel> list) {
         this.list = list;
-        db = FirebaseFirestore.getInstance();
-        uid = FirebaseAuth.getInstance().getUid();
+        this.db = FirebaseFirestore.getInstance();
+        this.uid = FirebaseAuth.getInstance().getUid();
     }
 
     @NonNull
@@ -52,44 +51,46 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.tvCategory.setText(post.getCategory());
         holder.tvLikes.setText(String.valueOf(post.getLikes()));
 
-        // 🔥 LIKE BUTTON CLICK
+        // ❤️ LIKE BUTTON
         holder.btnLike.setOnClickListener(v -> {
-            toggleLike(post.getId(), holder, post);
+            toggleLike(post, holder);
         });
 
-        holder.itemView.setOnLongClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), CommentsActivity.class);
-            intent.putExtra("postId", post.getId());
-            v.getContext().startActivity(intent);
-            return true;
-        });
+        // 💬 COMMENT BUTTON
         holder.btnComment.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), CommentsActivity.class);
             intent.putExtra("postId", post.getId());
             v.getContext().startActivity(intent);
         });
 
+        // 💬 LONG PRESS TO OPEN COMMENTS
+        holder.itemView.setOnLongClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), CommentsActivity.class);
+            intent.putExtra("postId", post.getId());
+            v.getContext().startActivity(intent);
+            return true;
+        });
 
-
-        // ✨ DOUBLE TAP TO LIKE (GEN-Z STYLE)
+        // ✨ SMALL TAP ANIMATION
         holder.itemView.setOnClickListener(v -> {
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 0.95f, 1f);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 0.95f, 1f);
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 0.96f, 1f);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 0.96f, 1f);
             scaleX.setDuration(120);
             scaleY.setDuration(120);
             scaleX.start();
             scaleY.start();
         });
-        FirebaseFirestore.getInstance()
-                .collection("posts")
-                .document(post.getId())
-                .collection("comments")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    int count = queryDocumentSnapshots.size();
-                    holder.tvComments.setText(String.valueOf(count));
-                });
 
+        // 🔢 LOAD COMMENT COUNT
+        if (post.getId() != null) {
+            db.collection("posts")
+                    .document(post.getId())
+                    .collection("comments")
+                    .get()
+                    .addOnSuccessListener(snapshots ->
+                            holder.tvComments.setText(String.valueOf(snapshots.size()))
+                    );
+        }
     }
 
     @Override
@@ -97,53 +98,54 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         return list.size();
     }
 
-    // ❤️ Like / Unlike Logic
-    private void toggleLike(String postId, PostViewHolder holder, PostModel post) {
+    // ❤️ LIKE / UNLIKE LOGIC (SAFE)
+    private void toggleLike(PostModel post, PostViewHolder holder) {
 
-        if (postId == null) {
-            return; // 🚫 Prevent crash
-        }
+        if (post.getId() == null || uid == null) return;
 
         DocumentReference likeRef = db.collection("posts")
-                .document(postId)
+                .document(post.getId())
                 .collection("likes")
                 .document(uid);
 
         likeRef.get().addOnSuccessListener(snapshot -> {
 
             if (snapshot.exists()) {
-                // 👎 Unlike
+                // 👎 UNLIKE
                 likeRef.delete();
-                db.collection("posts").document(postId)
+                db.collection("posts")
+                        .document(post.getId())
                         .update("likes", FieldValue.increment(-1));
 
-                holder.tvLikes.setText("❤️ " + (post.getLikes() - 1));
+                holder.tvLikes.setText(String.valueOf(post.getLikes() - 1));
             } else {
-                // 👍 Like
-                likeRef.set(new HashMap<>());
-                db.collection("posts").document(postId)
+                // 👍 LIKE
+                likeRef.set(new Object());
+                db.collection("posts")
+                        .document(post.getId())
                         .update("likes", FieldValue.increment(1));
 
-                holder.tvLikes.setText("❤️ " + (post.getLikes() + 1));
+                holder.tvLikes.setText(String.valueOf(post.getLikes() + 1));
             }
         });
     }
 
+    // 🔹 VIEW HOLDER
     static class PostViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvText,tvComments, tvCategory, tvLikes;
-        ImageView btnLike,btnComment;
+        TextView tvText, tvComments, tvCategory, tvLikes;
+        ImageView btnLike, btnComment;
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
+
             tvText = itemView.findViewById(R.id.tvText);
             tvCategory = itemView.findViewById(R.id.tvCategory);
             tvLikes = itemView.findViewById(R.id.tvLikes);
+            tvComments = itemView.findViewById(R.id.tvComments);
+
             btnLike = itemView.findViewById(R.id.btnLike);
             btnComment = itemView.findViewById(R.id.btnComment);
-            tvComments = itemView.findViewById(R.id.tvComments); // 🔥 THIS WAS NULL
-
-
         }
     }
 }
