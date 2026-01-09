@@ -18,7 +18,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        bottomNav = findViewById(R.id.bottom_nav);
+        bottomNav = findViewById(R.id.bottomNav);
 
         // Load default fragment
         if (savedInstanceState == null) {
@@ -49,7 +49,7 @@ public class HomeActivity extends AppCompatActivity {
     private void loadFragment(@NonNull Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, fragment)
+                .replace(R.id.fragmentContainer, fragment)
                 .commit();
     }
 }

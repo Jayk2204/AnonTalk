@@ -1,15 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
         android:id="@+id/nav_home"
-        android:title="Home"/>
-
-    <item
-        android:id="@+id/nav_saved"
-        android:title="Saved"/>
+        android:icon="@drawable/ic_nav_home"
+        android:title="Home" />
 
     <item
         android:id="@+id/nav_trending"
-        android:title="Trending"/>
+        android:icon="@drawable/ic_nav_trending"
+        android:title="Trending" />
+
+    <item
+        android:id="@+id/nav_add"
+        android:icon="@drawable/ic_nav_add"
+        android:title="Post" />
+
+    <item
+        android:id="@+id/nav_saved"
+        android:icon="@drawable/ic_nav_saved"
+        android:title="Saved" />
 
 </menu>
