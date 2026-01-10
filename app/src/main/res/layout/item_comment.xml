@@ -4,5 +4,5 @@
     android:layout_height="wrap_content"
     android:padding="12dp"
     android:textColor="@color/textWhite"
-    android:text="Nice post!"
+    android:text="Nice post..!"
     android:textSize="14sp"/>
