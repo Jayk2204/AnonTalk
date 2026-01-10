@@ -1,108 +1,254 @@
 package com.example.anontalk.activities;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.Spannable;
+import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.anontalk.R;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
+import com.example.anontalk.adapters.PostImageAdapter;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.vanniktech.emoji.EmojiPopup;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class PostActivity extends AppCompatActivity {
 
-    private TextInputEditText etConfession;
-    private ChipGroup chipGroupCategory;
-    private Button btnSubmit;
-    private ProgressBar progressPost;
+    private static final int PICK_IMAGES = 101;
+    private static final int MAX_CHARS = 500;
+    private static final String DRAFT_PREF = "post_draft";
 
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
+    TextInputEditText etPostText;
+    TextView tvCounter, btnPost;
+    ImageView btnBack, btnAddImage, btnEmoji;
+    RecyclerView rvImages;
+
+    ArrayList<Uri> imageList = new ArrayList<>();
+    PostImageAdapter imageAdapter;
+
+    FirebaseFirestore db;
+    StorageReference storageRef;
+
+    SharedPreferences prefs;
+    EmojiPopup emojiPopup;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle b) {
+        super.onCreate(b);
         setContentView(R.layout.activity_post);
 
-        // Views
-        etConfession = findViewById(R.id.etConfession);
-        chipGroupCategory = findViewById(R.id.chipGroupCategory);
-        btnSubmit = findViewById(R.id.btnSubmit);
-        progressPost = findViewById(R.id.progressPost);
+        etPostText = findViewById(R.id.etPostText);
+        tvCounter = findViewById(R.id.tvCounter);
+        btnPost = findViewById(R.id.btnPost);
+        btnBack = findViewById(R.id.btnBack);
+        btnAddImage = findViewById(R.id.btnAddImage);
+        btnEmoji = findViewById(R.id.btnEmoji);
+        rvImages = findViewById(R.id.rvImages);
 
-        // Firebase
+        // 🔥 FIRESTORE + STORAGE
         db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+        storageRef = FirebaseStorage.getInstance().getReference();
 
-        // Submit click
-        btnSubmit.setOnClickListener(v -> {
-            // Small premium press animation
-            v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(80).withEndAction(() -> {
-                v.animate().scaleX(1f).scaleY(1f).setDuration(80).start();
-            }).start();
+        prefs = getSharedPreferences(DRAFT_PREF, MODE_PRIVATE);
 
-            submitConfession();
+        setupRecycler();
+        setupEmoji();
+        loadDraft();
+        setupTextWatcher();
+
+        btnAddImage.setOnClickListener(v -> openGallery());
+        btnBack.setOnClickListener(v -> finish());
+        btnPost.setOnClickListener(v -> uploadPost());
+    }
+
+    private void setupRecycler() {
+        rvImages.setLayoutManager(
+                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        imageAdapter = new PostImageAdapter(this, imageList);
+        rvImages.setAdapter(imageAdapter);
+    }
+
+    private void setupEmoji() {
+        View rootView = findViewById(R.id.rootLayout);
+        emojiPopup = new EmojiPopup(rootView, etPostText);
+
+        btnEmoji.setOnClickListener(v -> {
+            if (emojiPopup.isShowing()) {
+                emojiPopup.dismiss();
+            } else {
+                emojiPopup.show();
+            }
         });
     }
 
-    private void submitConfession() {
-        String confessionText = etConfession.getText() != null
-                ? etConfession.getText().toString().trim()
-                : "";
+    private void setupTextWatcher() {
+        etPostText.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
 
-        if (confessionText.isEmpty()) {
-            Toast.makeText(this, "Please write something...", Toast.LENGTH_SHORT).show();
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                tvCounter.setText(s.length() + "/" + MAX_CHARS);
+                highlightHashtags(etPostText.getText());
+                saveDraft();
+            }
+        });
+    }
+
+    private void highlightHashtags(Editable editable) {
+        try {
+            ForegroundColorSpan[] spans = editable.getSpans(0, editable.length(), ForegroundColorSpan.class);
+            for (ForegroundColorSpan span : spans) {
+                editable.removeSpan(span);
+            }
+
+            String text = editable.toString();
+            int index = 0;
+            String[] words = text.split("\\s+");
+
+            for (String word : words) {
+                if (word.startsWith("#")) {
+                    int start = index;
+                    int end = index + word.length();
+
+                    if (start >= 0 && end <= editable.length()) {
+                        editable.setSpan(
+                                new ForegroundColorSpan(getColor(R.color.teal_700)),
+                                start,
+                                end,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        );
+                    }
+                }
+                index += word.length() + 1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void openGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(intent, PICK_IMAGES);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
+            if (data.getClipData() != null) {
+                int count = data.getClipData().getItemCount();
+                for (int i = 0; i < count; i++) {
+                    Uri uri = data.getClipData().getItemAt(i).getUri();
+                    imageList.add(uri);
+                }
+            } else if (data.getData() != null) {
+                imageList.add(data.getData());
+            }
+            imageAdapter.notifyDataSetChanged();
+        }
+    }
+
+    // 🔥 MAIN POST LOGIC
+    private void uploadPost() {
+        String text = etPostText.getText().toString().trim();
+
+        if (text.isEmpty()) {
+            Toast.makeText(this, "Write something first", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Get selected chip
-        int checkedId = chipGroupCategory.getCheckedChipId();
-        if (checkedId == View.NO_ID) {
-            Toast.makeText(this, "Please select a category", Toast.LENGTH_SHORT).show();
-            return;
+        Toast.makeText(this, "Uploading...", Toast.LENGTH_SHORT).show();
+
+        if (imageList.isEmpty()) {
+            savePost(text, new ArrayList<>());
+        } else {
+            uploadImages(text);
         }
+    }
 
-        Chip selectedChip = findViewById(checkedId);
-        String category = selectedChip.getText().toString();
+    // 🔥 MULTI IMAGE UPLOAD
+    private void uploadImages(String text) {
+        ArrayList<String> imageUrls = new ArrayList<>();
 
-        progressPost.setVisibility(View.VISIBLE);
-        btnSubmit.setEnabled(false);
+        for (int i = 0; i < imageList.size(); i++) {
+            Uri uri = imageList.get(i);
 
-        Map<String, Object> post = new HashMap<>();
-        post.put("userId", auth.getUid());
-        post.put("text", confessionText);
-        post.put("category", category);
-        post.put("likes", 0);
-        post.put("timestamp", FieldValue.serverTimestamp());
+            StorageReference ref = storageRef.child("post_images/" + System.currentTimeMillis() + "_" + i + ".jpg");
 
-        db.collection("posts")
-                .add(post)
+            ref.putFile(uri)
+                    .addOnSuccessListener(taskSnapshot ->
+                            ref.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                                imageUrls.add(downloadUri.toString());
+
+                                if (imageUrls.size() == imageList.size()) {
+                                    savePost(text, imageUrls);
+                                }
+                            })
+                    )
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Image upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                    );
+        }
+    }
+
+    // 🔥 SAVE TO FIRESTORE
+    private void savePost(String text, ArrayList<String> imageUrls) {
+
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("text", text);
+        map.put("images", imageUrls);
+        map.put("timestamp", System.currentTimeMillis());
+
+        db.collection("Posts")
+                .add(map)
                 .addOnSuccessListener(documentReference -> {
-                    progressPost.setVisibility(View.GONE);
-                    btnSubmit.setEnabled(true);
+                    clearDraft();
+                    Toast.makeText(this, "Post uploaded successfully", Toast.LENGTH_SHORT).show();
 
-                    Toast.makeText(PostActivity.this,
-                            "Confession posted anonymously 🔥",
-                            Toast.LENGTH_SHORT).show();
+                    // 🔁 GO BACK TO HOME FEED
+                    Intent intent = new Intent(PostActivity.this, HomeActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
                     finish();
                 })
-                .addOnFailureListener(e -> {
-                    progressPost.setVisibility(View.GONE);
-                    btnSubmit.setEnabled(true);
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Post failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                );
+    }
 
-                    Toast.makeText(PostActivity.this,
-                            "Failed: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
+    private void saveDraft() {
+        prefs.edit().putString("text", etPostText.getText().toString()).apply();
+    }
+
+    private  void loadDraft() {
+        String draft = prefs.getString("text", "");
+        if (!draft.isEmpty()) {
+            etPostText.setText(draft);
+        }
+    }
+
+    private void clearDraft() {
+        prefs.edit().clear().apply();
     }
 }

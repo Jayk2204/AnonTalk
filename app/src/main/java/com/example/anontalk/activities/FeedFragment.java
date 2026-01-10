@@ -14,11 +14,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.anontalk.R;
 import com.example.anontalk.adapters.PostAdapter;
 import com.example.anontalk.models.PostModel;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +41,7 @@ public class FeedFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         postList = new ArrayList<>();
-        postAdapter = new PostAdapter(postList);
+        postAdapter = new PostAdapter(requireContext(), postList);
         recyclerView.setAdapter(postAdapter);
 
         db = FirebaseFirestore.getInstance();
@@ -54,21 +52,22 @@ public class FeedFragment extends Fragment {
     }
 
     private void loadPosts() {
-        db.collection("posts")
+        db.collection("Posts")   // 🔥 FIXED: correct collection
                 .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(
-                            @Nullable QuerySnapshot value,
-                            @Nullable FirebaseFirestoreException error
-                    ) {
-                        if (error != null || value == null) return;
+                .addSnapshotListener((value, error) -> {
 
-                        postList.clear();
-                        postList.addAll(value.toObjects(PostModel.class));
-                        postAdapter = new PostAdapter(postList);
+                    if (error != null || value == null) return;
 
+                    postList.clear();
+
+                    for (QueryDocumentSnapshot doc : value) {
+                        PostModel model = doc.toObject(PostModel.class);
+                        model.setPostId(doc.getId());
+                        postList.add(model);
                     }
+
+                    postAdapter.notifyDataSetChanged();
                 });
     }
+
 }

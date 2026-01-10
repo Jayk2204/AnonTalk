@@ -1,5 +1,6 @@
 package com.example.anontalk.adapters;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,35 +14,41 @@ import com.example.anontalk.models.CommentModel;
 
 import java.util.List;
 
-public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.Holder> {
+public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHolder> {
 
-    private List<CommentModel> list;
+    private Context context;
+    private List<CommentModel> commentList;
 
-    public CommentAdapter(List<CommentModel> list) {
-        this.list = list;
+    // ✅ FIXED CONSTRUCTOR
+    public CommentAdapter(Context context, List<CommentModel> commentList) {
+        this.context = context;
+        this.commentList = commentList;
     }
 
     @NonNull
     @Override
-    public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_comment, parent, false);
-        return new Holder(v);
+    public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.item_comment, parent, false);
+        return new CommentViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull Holder holder, int position) {
-        holder.tvComment.setText(list.get(position).getText());
+    public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
+
+        CommentModel model = commentList.get(position);
+        holder.tvComment.setText(model.getText());
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return commentList.size();
     }
 
-    static class Holder extends RecyclerView.ViewHolder {
+    static class CommentViewHolder extends RecyclerView.ViewHolder {
+
         TextView tvComment;
-        public Holder(@NonNull View itemView) {
+
+        public CommentViewHolder(@NonNull View itemView) {
             super(itemView);
             tvComment = itemView.findViewById(R.id.tvComment);
         }

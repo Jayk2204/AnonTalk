@@ -1,79 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_margin="12dp"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="8dp"
-    android:backgroundTint="@color/cardDark">
+    xmlns:app="http://schemas.android.com/tools"
+    android:layout_margin="10dp"
+    card_view:cardCornerRadius="12dp"
+    card_view:cardElevation="4dp"
+    card_view:cardUseCompatPadding="true"
+    android:backgroundTint="#121212">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="12dp">
 
+        <!-- POST TEXT -->
         <TextView
-            android:id="@+id/tvCategory"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🎓 College"
-            android:textColor="@color/primaryNeon"
-            android:textStyle="bold"
-            android:textSize="13sp"/>
-
-        <TextView
-            android:id="@+id/tvText"
+            android:id="@+id/tvPostText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Confession text here..."
-            android:textColor="@color/textWhite"
+            android:text="Post text here..."
             android:textSize="16sp"
-            android:layout_marginTop="6dp"/>
+            android:textColor="@android:color/white"
+            android:lineSpacingExtra="3dp"
+            android:paddingBottom="8dp"/>
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="10dp">
+            android:text="2 min ago"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:paddingBottom="6dp"/>
 
-            <!-- ❤️ Like Button -->
+
+        <!-- POST IMAGE -->
+        <ImageView
+            android:id="@+id/imgPost"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:background="#1E1E1E"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- ACTION ROW -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- LIKE -->
             <ImageView
                 android:id="@+id/btnLike"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_heart"
-                android:layout_marginEnd="6dp"/>
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_like"
+                app:tint="@color/teal_700"/>
 
-            <!-- Like Count -->
             <TextView
                 android:id="@+id/tvLikes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="14sp"
-                android:layout_marginEnd="18dp"/>
+                android:paddingStart="6dp"
+                android:paddingEnd="16dp"/>
 
-            <!-- 💬 Comment Button -->
+            <!-- COMMENT -->
             <ImageView
                 android:id="@+id/btnComment"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/ic_comment"
-                android:layout_marginEnd="6dp"/>
+                app:tint="@color/teal_700"/>
 
-            <!-- Comment Count -->
             <TextView
                 android:id="@+id/tvComments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="14sp"/>
+                android:paddingStart="6dp"/>
         </LinearLayout>
 
-
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>

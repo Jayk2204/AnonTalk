@@ -1,24 +1,46 @@
 package com.example.anontalk.models;
 
 import com.google.firebase.Timestamp;
+import java.util.List;
 
 public class PostModel {
 
-    private String id;   // 🔥 Firestore document ID
-    private String userId;
+    private String postId;
     private String text;
-    private String category;
-    private long likes;
-    private Timestamp timestamp;
+    private List<String> images;
+    private Object timestamp; // 🔥 accept both long & Timestamp
+    private int likeCount;
+    private int commentCount;
 
     public PostModel() {}
 
-    public String getId() { return id; }
-    public String getUserId() { return userId; }
-    public String getText() { return text; }
-    public String getCategory() { return category; }
-    public long getLikes() { return likes; }
-    public Timestamp getTimestamp() { return timestamp; }
+    public PostModel(String postId, String text, List<String> images,
+                     Object timestamp, int likeCount, int commentCount) {
+        this.postId = postId;
+        this.text = text;
+        this.images = images;
+        this.timestamp = timestamp;
+        this.likeCount = likeCount;
+        this.commentCount = commentCount;
+    }
 
-    public void setId(String id) { this.id = id; }   // 🔥 REQUIRED
+    public String getPostId() { return postId; }
+    public void setPostId(String postId) { this.postId = postId; }
+
+    public String getText() { return text; }
+    public List<String> getImages() { return images; }
+
+    // 🔥 SAFE TIMESTAMP CONVERSION
+    public long getTimestamp() {
+        if (timestamp instanceof Long) {
+            return (Long) timestamp;
+        } else if (timestamp instanceof Timestamp) {
+            return ((Timestamp) timestamp).toDate().getTime();
+        } else {
+            return 0;
+        }
+    }
+
+    public int getLikeCount() { return likeCount; }
+    public int getCommentCount() { return commentCount; }
 }

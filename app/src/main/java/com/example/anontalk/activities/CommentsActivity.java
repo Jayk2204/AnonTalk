@@ -12,75 +12,72 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.anontalk.R;
 import com.example.anontalk.adapters.CommentAdapter;
 import com.example.anontalk.models.CommentModel;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CommentsActivity extends AppCompatActivity {
 
-    private EditText etComment;
-    private Button btnSend;
-    private RecyclerView rvComments;
+    RecyclerView recyclerView;
+    EditText etComment;
+    Button btnSend;
 
-    private String postId;
-    private FirebaseFirestore db;
-    private List<CommentModel> list;
-    private CommentAdapter adapter;
+    FirebaseFirestore db;
+    List<CommentModel> commentList = new ArrayList<>();
+    CommentAdapter adapter;
+
+    String postId;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle b) {
+        super.onCreate(b);
         setContentView(R.layout.activity_comments);
 
+        postId = getIntent().getStringExtra("postId");
+
+        recyclerView = findViewById(R.id.recyclerViewComments);
         etComment = findViewById(R.id.etComment);
         btnSend = findViewById(R.id.btnSend);
-        rvComments = findViewById(R.id.rvComments);
-
-        rvComments.setLayoutManager(new LinearLayoutManager(this));
-
-        list = new ArrayList<>();
-        adapter = new CommentAdapter(list);
-        rvComments.setAdapter(adapter);
 
         db = FirebaseFirestore.getInstance();
-        postId = getIntent().getStringExtra("postId");
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new CommentAdapter(this, commentList);
+        recyclerView.setAdapter(adapter);
 
         loadComments();
 
         btnSend.setOnClickListener(v -> sendComment());
     }
 
-    private void sendComment() {
-        String text = etComment.getText().toString().trim();
-        if (text.isEmpty()) return;
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("text", text);
-        map.put("userId", FirebaseAuth.getInstance().getUid());
-        map.put("timestamp", System.currentTimeMillis());
-
-        db.collection("posts").document(postId)
-                .collection("comments")
-                .add(map);
-
-        etComment.setText("");
-    }
-
     private void loadComments() {
-        db.collection("posts").document(postId)
-                .collection("comments")
+        db.collection("Posts").document(postId).collection("Comments")
                 .addSnapshotListener((value, error) -> {
-                    if (value == null) return;
-                    list.clear();
+                    commentList.clear();
                     for (var doc : value.getDocuments()) {
-                        CommentModel c = doc.toObject(CommentModel.class);
-                        if (c != null) list.add(c);
+                        CommentModel model = doc.toObject(CommentModel.class);
+                        commentList.add(model);
                     }
                     adapter.notifyDataSetChanged();
+                });
+    }
+
+    private void sendComment() {
+        String comment = etComment.getText().toString().trim();
+        if (comment.isEmpty()) return;
+
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("text", comment);
+        map.put("timestamp", System.currentTimeMillis());
+
+        db.collection("Posts").document(postId)
+                .collection("Comments")
+                .add(map)
+                .addOnSuccessListener(unused -> {
+                    etComment.setText("");
+                    Toast.makeText(this, "Comment added", Toast.LENGTH_SHORT).show();
                 });
     }
 }

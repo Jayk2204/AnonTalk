@@ -7,5 +7,7 @@
     <color name="accentPink">#FF4D8D</color>
     <color name="textWhite">#FFFFFF</color>
     <color name="textGray">#AAAAAA</color>
+    <color name="teal_700">#00796B</color>
+
 
 </resources>

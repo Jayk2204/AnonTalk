@@ -46,10 +46,21 @@ dependencies {
 
     implementation("androidx.core:core-splashscreen:1.0.1")
 
-    // 🔥 Firebase (Kotlin DSL syntax)
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    // 🔥 Firebase (Correct Kotlin DSL)
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
+// Emoji (simple emoji popup)
+    implementation("com.vanniktech:emoji-google:0.19.0")
+
+
 
 
 }
