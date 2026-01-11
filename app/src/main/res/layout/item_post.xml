@@ -38,14 +38,13 @@
 
 
         <!-- POST IMAGE -->
-        <ImageView
-            android:id="@+id/imgPost"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPostImages"
             android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:background="#1E1E1E"
-            android:layout_marginBottom="8dp"/>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"/>
+
 
         <!-- ACTION ROW -->
         <LinearLayout

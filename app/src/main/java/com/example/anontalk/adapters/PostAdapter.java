@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.anontalk.R;
@@ -18,6 +19,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.anontalk.adapters.FeedImageAdapter;
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +64,24 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.tvLikes.setText(String.valueOf(model.getLikeCount()));
         holder.tvComments.setText(String.valueOf(model.getCommentCount()));
 
+        // 🖼️ SHOW POST IMAGES
+        if (model.getImages() != null && !model.getImages().isEmpty()) {
+
+            holder.rvImages.setVisibility(View.VISIBLE);
+
+            FeedImageAdapter imageAdapter =
+                    new FeedImageAdapter(context, model.getImages());
+
+            holder.rvImages.setLayoutManager(
+                    new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
+
+            holder.rvImages.setAdapter(imageAdapter);
+
+        } else {
+            holder.rvImages.setVisibility(View.GONE);
+        }
+
+
         // ❤️ CHECK IF USER ALREADY LIKED
         likeRef.get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
@@ -101,7 +122,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                     if (value != null) {
                         int count = value.size();
                         holder.tvComments.setText(String.valueOf(count));
-                        postList.get(position).setCommentCount(count);
+//                        postList.get(position).setCommentCount(count);
                     }
                 });
 
@@ -111,7 +132,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 Long likes = snapshot.getLong("likeCount");
                 if (likes == null) likes = 0L;
                 holder.tvLikes.setText(String.valueOf(likes));
-                postList.get(position).setLikeCount(likes.intValue());
+//                postList.get(position).setLikeCount(likes.intValue());
             }
         });
     }
@@ -175,6 +196,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
         TextView tvPostText, tvLikes, tvComments, tvTime;
         ImageView btnLike, btnComment;
+        RecyclerView rvImages;   // 🔥 FIX: ADD IMAGE RECYCLERVIEW
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -186,6 +208,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
             btnLike = itemView.findViewById(R.id.btnLike);
             btnComment = itemView.findViewById(R.id.btnComment);
+
+            rvImages = itemView.findViewById(R.id.rvPostImages); // 🔥 MUST MATCH XML
         }
     }
 }
