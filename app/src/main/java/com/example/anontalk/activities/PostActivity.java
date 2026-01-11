@@ -9,6 +9,7 @@ import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
+import android.util.Base64;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -23,12 +24,23 @@ import com.example.anontalk.R;
 import com.example.anontalk.adapters.PostImageAdapter;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.vanniktech.emoji.EmojiPopup;
 
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class PostActivity extends AppCompatActivity {
 
@@ -45,8 +57,6 @@ public class PostActivity extends AppCompatActivity {
     PostImageAdapter imageAdapter;
 
     FirebaseFirestore db;
-    StorageReference storageRef;
-
     SharedPreferences prefs;
     EmojiPopup emojiPopup;
 
@@ -63,10 +73,7 @@ public class PostActivity extends AppCompatActivity {
         btnEmoji = findViewById(R.id.btnEmoji);
         rvImages = findViewById(R.id.rvImages);
 
-        // 🔥 FIRESTORE + STORAGE
         db = FirebaseFirestore.getInstance();
-        storageRef = FirebaseStorage.getInstance().getReference();
-
         prefs = getSharedPreferences(DRAFT_PREF, MODE_PRIVATE);
 
         setupRecycler();
@@ -194,21 +201,17 @@ public class PostActivity extends AppCompatActivity {
         for (int i = 0; i < imageList.size(); i++) {
             Uri uri = imageList.get(i);
 
-            StorageReference ref = storageRef.child("post_images/" + System.currentTimeMillis() + "_" + i + ".jpg");
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(uri);
+                byte[] bytes = getBytes(inputStream);
+                String base64Image = Base64.encodeToString(bytes, Base64.DEFAULT);
 
-            ref.putFile(uri)
-                    .addOnSuccessListener(taskSnapshot ->
-                            ref.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                                imageUrls.add(downloadUri.toString());
+                uploadToImgbb(base64Image, imageUrls, text);
 
-                                if (imageUrls.size() == imageList.size()) {
-                                    savePost(text, imageUrls);
-                                }
-                            })
-                    )
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Image upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                    );
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Image read failed", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -219,14 +222,15 @@ public class PostActivity extends AppCompatActivity {
         map.put("text", text);
         map.put("images", imageUrls);
         map.put("timestamp", System.currentTimeMillis());
+        map.put("likeCount", 0);
+        map.put("commentCount", 0);
 
-        db.collection("Posts")
+        db.collection("posts")
                 .add(map)
                 .addOnSuccessListener(documentReference -> {
                     clearDraft();
                     Toast.makeText(this, "Post uploaded successfully", Toast.LENGTH_SHORT).show();
 
-                    // 🔁 GO BACK TO HOME FEED
                     Intent intent = new Intent(PostActivity.this, HomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent);
@@ -241,7 +245,7 @@ public class PostActivity extends AppCompatActivity {
         prefs.edit().putString("text", etPostText.getText().toString()).apply();
     }
 
-    private  void loadDraft() {
+    private void loadDraft() {
         String draft = prefs.getString("text", "");
         if (!draft.isEmpty()) {
             etPostText.setText(draft);
@@ -250,5 +254,62 @@ public class PostActivity extends AppCompatActivity {
 
     private void clearDraft() {
         prefs.edit().clear().apply();
+    }
+
+    // 🔥 IMGBB UPLOAD
+    private void uploadToImgbb(String base64Image, ArrayList<String> imageUrls, String text) {
+
+        String apiKey = "ede61915513be11f40d19070b26786f2"; // 🔑 Replace with your real key
+
+        RequestBody body = new FormBody.Builder()
+                .add("key", apiKey)
+                .add("image", base64Image)
+                .build();
+
+        Request request = new Request.Builder()
+                .url("https://api.imgbb.com/1/upload")
+                .post(body)
+                .build();
+
+        OkHttpClient client = new OkHttpClient();
+        client.newCall(request).enqueue(new Callback() {
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                runOnUiThread(() ->
+                        Toast.makeText(PostActivity.this, "Image upload failed", Toast.LENGTH_SHORT).show()
+                );
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    String res = response.body().string();
+                    JSONObject json = new JSONObject(res);
+                    String imageUrl = json.getJSONObject("data").getString("url");
+
+                    imageUrls.add(imageUrl);
+
+                    if (imageUrls.size() == imageList.size()) {
+                        runOnUiThread(() -> savePost(text, imageUrls));
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private byte[] getBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        int len;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+        return byteBuffer.toByteArray();
     }
 }
