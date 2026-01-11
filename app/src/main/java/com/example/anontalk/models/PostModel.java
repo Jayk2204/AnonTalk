@@ -28,7 +28,10 @@ public class PostModel {
     public void setPostId(String postId) { this.postId = postId; }
 
     public String getText() { return text; }
+    public void setText(String text) { this.text = text; }
+
     public List<String> getImages() { return images; }
+    public void setImages(List<String> images) { this.images = images; }
 
     // 🔥 SAFE TIMESTAMP CONVERSION
     public long getTimestamp() {
@@ -41,6 +44,17 @@ public class PostModel {
         }
     }
 
+    public void setTimestamp(Object timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public int getLikeCount() { return likeCount; }
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
     public int getCommentCount() { return commentCount; }
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
+    }
 }

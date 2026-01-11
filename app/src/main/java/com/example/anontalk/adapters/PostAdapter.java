@@ -49,7 +49,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         PostModel model = postList.get(position);
 
         holder.tvPostText.setText(model.getText());
-        holder.tvComments.setText(String.valueOf(model.getCommentCount()));
         holder.tvTime.setText(getTimeAgo(model.getTimestamp()));
 
         String postId = model.getPostId();
@@ -58,14 +57,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         DocumentReference postRef = db.collection("posts").document(postId);
         DocumentReference likeRef = postRef.collection("likes").document(userId);
 
-        // 🔁 REALTIME LIKE COUNT UPDATE
-        postRef.addSnapshotListener((snapshot, error) -> {
-            if (snapshot != null && snapshot.exists()) {
-                Long likes = snapshot.getLong("likeCount");
-                if (likes == null) likes = 0L; // 🔥 IMPORTANT
-                holder.tvLikes.setText(String.valueOf(likes));
-            }
-        });
+        // ❤️ SET INITIAL COUNTS
+        holder.tvLikes.setText(String.valueOf(model.getLikeCount()));
+        holder.tvComments.setText(String.valueOf(model.getCommentCount()));
 
         // ❤️ CHECK IF USER ALREADY LIKED
         likeRef.get().addOnSuccessListener(doc -> {
@@ -77,7 +71,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         });
 
         // ❤️ LIKE BUTTON CLICK
-        holder.btnLike.setOnClickListener(v -> toggleLike(postRef, likeRef, holder));
+        holder.btnLike.setOnClickListener(v -> toggleLike(postRef, likeRef, holder, position));
 
         // ❤️ DOUBLE TAP TO LIKE
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -87,7 +81,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             public void onClick(View v) {
                 long clickTime = System.currentTimeMillis();
                 if (clickTime - lastClickTime < 300) {
-                    toggleLike(postRef, likeRef, holder);
+                    toggleLike(postRef, likeRef, holder, position);
                     animateHeart(holder.btnLike);
                 }
                 lastClickTime = clickTime;
@@ -101,31 +95,44 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             context.startActivity(intent);
         });
 
-        // 🔁 AUTO UPDATE COMMENT COUNT
+        // 🔁 REALTIME COMMENT COUNT
         postRef.collection("comments")
                 .addSnapshotListener((value, error) -> {
                     if (value != null) {
-                        holder.tvComments.setText(String.valueOf(value.size()));
+                        int count = value.size();
+                        holder.tvComments.setText(String.valueOf(count));
+                        postList.get(position).setCommentCount(count);
                     }
                 });
+
+        // 🔁 REALTIME LIKE COUNT
+        postRef.addSnapshotListener((snapshot, error) -> {
+            if (snapshot != null && snapshot.exists()) {
+                Long likes = snapshot.getLong("likeCount");
+                if (likes == null) likes = 0L;
+                holder.tvLikes.setText(String.valueOf(likes));
+                postList.get(position).setLikeCount(likes.intValue());
+            }
+        });
     }
 
     // ❤️ LIKE TOGGLE (ONE USER = ONE LIKE)
-    private void toggleLike(DocumentReference postRef, DocumentReference likeRef, PostViewHolder holder) {
+    private void toggleLike(DocumentReference postRef, DocumentReference likeRef,
+                            PostViewHolder holder, int position) {
 
         db.runTransaction(transaction -> {
 
             DocumentSnapshot postSnapshot = transaction.get(postRef);
             DocumentSnapshot likeSnapshot = transaction.get(likeRef);
 
-            long likeCount = postSnapshot.getLong("likeCount") == null
-                    ? 0
-                    : postSnapshot.getLong("likeCount");
+            long likeCount = postSnapshot.contains("likeCount")
+                    ? postSnapshot.getLong("likeCount")
+                    : 0;
 
             if (likeSnapshot.exists()) {
                 // ❌ UNLIKE
                 transaction.delete(likeRef);
-                transaction.update(postRef, "likeCount", likeCount - 1);
+                transaction.update(postRef, "likeCount", Math.max(likeCount - 1, 0));
             } else {
                 // ❤️ LIKE
                 transaction.set(likeRef, new HashMap<>());
@@ -135,6 +142,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
         }).addOnSuccessListener(unused -> {
             animateHeart(holder.btnLike);
+            notifyItemChanged(position);
         });
     }
 

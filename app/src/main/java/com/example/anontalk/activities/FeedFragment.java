@@ -52,7 +52,7 @@ public class FeedFragment extends Fragment {
     }
 
     private void loadPosts() {
-        db.collection("Posts")   // 🔥 FIXED: correct collection
+        db.collection("posts")   // ✅ MUST MATCH PostAdapter
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
@@ -69,5 +69,4 @@ public class FeedFragment extends Fragment {
                     postAdapter.notifyDataSetChanged();
                 });
     }
-
 }

@@ -1,8 +1,28 @@
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/tvComment"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp"
-    android:textColor="@color/textWhite"
-    android:text="Nice post..!"
-    android:textSize="14sp"/>
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Comment Text -->
+    <TextView
+        android:id="@+id/tvComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nice post..!"
+        android:textColor="@color/textWhite"
+        android:textSize="14sp" />
+
+    <!-- (edited) Label -->
+    <TextView
+        android:id="@+id/tvEdited"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(edited)"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:visibility="gone"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>
