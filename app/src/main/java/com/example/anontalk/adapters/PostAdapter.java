@@ -193,105 +193,101 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         String uid = auth.getCurrentUser().getUid();
 
         boolean isExpired = Timestamp.now().compareTo(poll.getExpiresAt()) > 0;
-        if (isExpired) {
-            holder.tvStatus.setVisibility(View.VISIBLE);
-            holder.tvStatus.setText("Poll ended");
-        } else {
-            holder.tvStatus.setVisibility(View.GONE);
-        }
+        holder.tvStatus.setVisibility(isExpired ? View.VISIBLE : View.GONE);
+        holder.tvStatus.setText("Poll ended");
 
-        // 🔁 REALTIME LISTENER FOR POLL (to get updated totalVotes)
-        db.collection("polls")
-                .document(pollId)
-                .addSnapshotListener((pollSnap, error) -> {
+        DocumentReference pollRef = db.collection("polls").document(pollId);
+        DocumentReference voteRef = pollRef.collection("votes").document(uid);
 
-                    if (pollSnap == null || !pollSnap.exists()) return;
-                    Long totalVotesObj = pollSnap.getLong("totalVotes");
-                    if (totalVotesObj == null) totalVotesObj = 0L;
+        // -----------------------------
+        // 🔁 LISTEN: POLL TOTAL VOTES
+        // -----------------------------
+        pollRef.addSnapshotListener((pollSnap, e) -> {
+            if (pollSnap == null || !pollSnap.exists()) return;
 
-// 🔒 Make it final for lambda usage
-                    final long totalVotes = totalVotesObj;
+            Long totalVotesObj = pollSnap.getLong("totalVotes");
+            if (totalVotesObj == null) totalVotesObj = 0L;
 
+            holder.tvTotalVotes.setText(totalVotesObj + " votes");
+        });
 
-                    holder.tvTotalVotes.setText(totalVotes + " votes");
+        // -----------------------------
+        // 🔁 LISTEN: USER VOTE
+        // -----------------------------
+        voteRef.addSnapshotListener((voteSnap, e) -> {
 
-                    // 🔎 CHECK USER VOTE
-                    db.collection("polls")
-                            .document(pollId)
-                            .collection("votes")
-                            .document(uid)
-                            .get()
-                            .addOnSuccessListener(voteSnap -> {
+            String votedOptionId = null;
+            if (voteSnap != null && voteSnap.exists()) {
+                votedOptionId = voteSnap.getString("optionId");
+            }
 
-                                String votedOptionId = null;
-                                if (voteSnap.exists()) {
-                                    votedOptionId = voteSnap.getString("optionId");
-                                }
+            final String finalVotedOptionId = votedOptionId;
 
-                                final String finalVotedOptionId = votedOptionId;
+            // -----------------------------
+            // 🔁 LISTEN: OPTIONS
+            // -----------------------------
+            pollRef.collection("options")
+                    .addSnapshotListener((optionsSnap, error2) -> {
 
-                                // 🔁 LOAD OPTIONS (REALTIME)
-                                db.collection("polls")
-                                        .document(pollId)
-                                        .collection("options")
-                                        .addSnapshotListener((value, error2) -> {
+                        if (optionsSnap == null) return;
 
-                                            if (value == null) return;
+                        holder.optionsContainer.removeAllViews();
 
-                                            holder.optionsContainer.removeAllViews();
+                        for (DocumentSnapshot doc : optionsSnap) {
 
-                                            for (DocumentSnapshot doc : value) {
+                            String optionId = doc.getId();
+                            String text = doc.getString("text");
+                            Long votesObj = doc.getLong("votes");
+                            if (votesObj == null) votesObj = 0L;
+                            long votes = votesObj;
 
-                                                String optionId = doc.getId();
-                                                String text = doc.getString("text");
-                                                Long votes = doc.getLong("votes");
-                                                if (votes == null) votes = 0L;
+                            View optView = LayoutInflater.from(context)
+                                    .inflate(R.layout.item_poll_option, holder.optionsContainer, false);
 
-                                                View optView = LayoutInflater.from(context)
-                                                        .inflate(R.layout.item_poll_option, holder.optionsContainer, false);
+                            TextView tvOpt = optView.findViewById(R.id.tvOptionText);
+                            TextView tvVotes = optView.findViewById(R.id.tvVotes);
+                            TextView tvPercentage = optView.findViewById(R.id.tvPercentage);
+                            TextView tvSelected = optView.findViewById(R.id.tvSelected);
+                            ProgressBar progressBar = optView.findViewById(R.id.progressBar);
 
-                                                TextView tvOpt = optView.findViewById(R.id.tvOptionText);
-                                                TextView tvVotes = optView.findViewById(R.id.tvVotes);
-                                                TextView tvPercentage = optView.findViewById(R.id.tvPercentage);
-                                                TextView tvSelected = optView.findViewById(R.id.tvSelected);
-                                                ProgressBar progressBar = optView.findViewById(R.id.progressBar);
+                            tvOpt.setText(text);
+                            tvVotes.setText(votes + " votes");
 
-                                                tvOpt.setText(text);
-                                                tvVotes.setText(votes + " votes");
+                            long totalVotes = poll.getTotalVotes(); // fallback
+                            if (totalVotes == 0) {
+                                totalVotes = votes; // avoid divide by zero UI glitch
+                            }
 
-                                                int percent = totalVotes > 0
-                                                        ? (int) ((votes * 100) / totalVotes)
-                                                        : 0;
+                            int percent = totalVotes > 0
+                                    ? (int) ((votes * 100) / totalVotes)
+                                    : 0;
 
-                                                tvPercentage.setText(percent + "%");
+                            tvPercentage.setText(percent + "%");
+                            progressBar.setMax(100);
+                            progressBar.setProgress(percent);
 
-                                                // 🎯 Animate progress bar correctly
-                                                progressBar.setProgress(0);
-                                                progressBar.setMax(100);
-                                                progressBar.setProgress(percent);
+                            // ✅ Highlight selected option
+                            if (finalVotedOptionId != null && finalVotedOptionId.equals(optionId)) {
+                                tvSelected.setVisibility(View.VISIBLE);
+                                optView.setBackgroundResource(R.drawable.poll_selected_bg);
+                            } else {
+                                tvSelected.setVisibility(View.GONE);
+                                optView.setBackgroundResource(R.drawable.poll_option_bg);
+                            }
 
-                                                // ✅ Highlight voted option
-                                                if (finalVotedOptionId != null && finalVotedOptionId.equals(optionId)) {
-                                                    tvSelected.setVisibility(View.VISIBLE);
-                                                    optView.setBackgroundResource(R.drawable.poll_selected_bg);
-                                                } else {
-                                                    tvSelected.setVisibility(View.GONE);
-                                                    optView.setBackgroundResource(R.drawable.poll_option_bg);
-                                                }
+                            // 🗳 Click to vote
+                            if (!isExpired && finalVotedOptionId == null) {
+                                optView.setOnClickListener(v ->
+                                        voteOnPoll(pollId, optionId)
+                                );
+                            }
 
-                                                // 🛑 Disable voting if expired or already voted
-                                                if (!isExpired && finalVotedOptionId == null) {
-                                                    optView.setOnClickListener(v ->
-                                                            voteOnPoll(pollId, optionId)
-                                                    );
-                                                }
-
-                                                holder.optionsContainer.addView(optView);
-                                            }
-                                        });
-                            });
-                });
+                            holder.optionsContainer.addView(optView);
+                        }
+                    });
+        });
     }
+
 
 
 
@@ -308,39 +304,48 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 .document(uid);
 
         voteRef.get().addOnSuccessListener(snapshot -> {
+
             if (snapshot.exists()) {
                 Toast.makeText(context, "You already voted", Toast.LENGTH_SHORT).show();
-            } else {
+                return;
+            }
 
+            DocumentReference pollRef = db.collection("polls").document(pollId);
+            DocumentReference optionRef = pollRef
+                    .collection("options")
+                    .document(optionId);
+
+            db.runTransaction(transaction -> {
+
+                // 🗳 Get option votes
+                DocumentSnapshot optionSnap = transaction.get(optionRef);
+                Long optionVotes = optionSnap.getLong("votes");
+                if (optionVotes == null) optionVotes = 0L;
+
+                // 📊 Get poll total votes
+                DocumentSnapshot pollSnap = transaction.get(pollRef);
+                Long totalVotes = pollSnap.getLong("totalVotes");
+                if (totalVotes == null) totalVotes = 0L;
+
+                // 🔄 Update both
+                transaction.update(optionRef, "votes", optionVotes + 1);
+                transaction.update(pollRef, "totalVotes", totalVotes + 1);
+
+                // 🧾 Save user vote
                 Map<String, Object> voteMap = new HashMap<>();
                 voteMap.put("optionId", optionId);
                 voteMap.put("votedAt", Timestamp.now());
+                transaction.set(voteRef, voteMap);
 
-                voteRef.set(voteMap);
-
-                DocumentReference optionRef = db.collection("polls")
-                        .document(pollId)
-                        .collection("options")
-                        .document(optionId);
-
-                db.runTransaction(transaction -> {
-
-                    Long votes = transaction.get(optionRef).getLong("votes");
-                    if (votes == null) votes = 0L;
-                    transaction.update(optionRef, "votes", votes + 1);
-
-                    DocumentReference pollRef = db.collection("polls").document(pollId);
-                    Long totalVotes = transaction.get(pollRef).getLong("totalVotes");
-                    if (totalVotes == null) totalVotes = 0L;
-                    transaction.update(pollRef, "totalVotes", totalVotes + 1);
-
-                    return null;
-                });
-
-                Toast.makeText(context, "Vote submitted", Toast.LENGTH_SHORT).show();
-            }
+                return null;
+            }).addOnSuccessListener(unused ->
+                    Toast.makeText(context, "Vote submitted", Toast.LENGTH_SHORT).show()
+            ).addOnFailureListener(e ->
+                    Toast.makeText(context, "Vote failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+            );
         });
     }
+
 
     // ==============================
     // ❤️ LIKE TOGGLE
