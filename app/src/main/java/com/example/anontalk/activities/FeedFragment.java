@@ -13,19 +13,22 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.anontalk.R;
 import com.example.anontalk.adapters.PostAdapter;
+import com.example.anontalk.models.FeedItem;
+import com.example.anontalk.models.PollModel;
 import com.example.anontalk.models.PostModel;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FeedFragment extends Fragment {
 
     RecyclerView recyclerView;
     PostAdapter postAdapter;
-    List<PostModel> postList;
+    List<FeedItem> feedList;
     FirebaseFirestore db;
 
     @Nullable
@@ -40,31 +43,72 @@ public class FeedFragment extends Fragment {
         recyclerView = view.findViewById(R.id.postRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        postList = new ArrayList<>();
-        postAdapter = new PostAdapter(requireContext(), postList);
+        feedList = new ArrayList<>();
+        postAdapter = new PostAdapter(requireContext(), feedList);
         recyclerView.setAdapter(postAdapter);
 
         db = FirebaseFirestore.getInstance();
 
-        loadPosts();
+        loadPostsAndPolls();
 
         return view;
     }
 
-    private void loadPosts() {
-        db.collection("posts")   // ✅ MUST MATCH PostAdapter
+    private void loadPostsAndPolls() {
+
+        // 🔥 LOAD POSTS
+        db.collection("posts")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener((value, error) -> {
+                .addSnapshotListener((postSnap, error) -> {
 
-                    if (error != null || value == null) return;
+                    if (error != null || postSnap == null) return;
 
-                    postList.clear();
+                    feedList.clear();
 
-                    for (QueryDocumentSnapshot doc : value) {
+                    for (QueryDocumentSnapshot doc : postSnap) {
                         PostModel model = doc.toObject(PostModel.class);
                         model.setPostId(doc.getId());
-                        postList.add(model);
+
+                        // Wrap PostModel inside FeedItem
+                        feedList.add(new FeedItem("POST", model, null));
                     }
+
+                    loadPolls(); // load polls after posts
+                });
+    }
+
+    // 🔥 LOAD POLLS
+    private void loadPolls() {
+
+        db.collection("polls")
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .addSnapshotListener((pollSnap, error) -> {
+
+                    if (error != null || pollSnap == null) return;
+
+                    // Remove old polls to avoid duplication
+                    List<FeedItem> onlyPosts = new ArrayList<>();
+                    for (FeedItem item : feedList) {
+                        if (item.getType().equals("POST")) {
+                            onlyPosts.add(item);
+                        }
+                    }
+
+                    feedList.clear();
+                    feedList.addAll(onlyPosts);
+
+                    for (QueryDocumentSnapshot doc : pollSnap) {
+                        PollModel poll = doc.toObject(PollModel.class);
+                        poll.setPollId(doc.getId());
+
+                        feedList.add(new FeedItem("POLL", null, poll));
+                    }
+
+                    // 🔃 SORT BY TIMESTAMP (POST + POLL)
+                    Collections.sort(feedList, (o1, o2) -> {
+                        if (o1.getTimestamp() == null || o2.getTimestamp() == null) return 0;
+                        return o2.getTimestamp().compareTo(o1.getTimestamp());
+                    });
 
                     postAdapter.notifyDataSetChanged();
                 });

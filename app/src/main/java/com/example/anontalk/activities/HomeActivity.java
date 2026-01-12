@@ -1,11 +1,16 @@
 package com.example.anontalk.activities;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.anontalk.R;
@@ -15,6 +20,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 public class HomeActivity extends AppCompatActivity {
 
     BottomNavigationView bottomNav;
+    private static final int NOTIFICATION_PERMISSION_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +60,9 @@ public class HomeActivity extends AppCompatActivity {
 
             return false;
         });
+
+        // 🔔 Request Notification Permission (Android 13+)
+        requestNotificationPermission();
     }
 
     private void loadFragment(@NonNull Fragment fragment) {
@@ -74,16 +83,33 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(new Intent(this, PostActivity.class));
         });
 
-//        view.findViewById(R.id.btnAddPoll).setOnClickListener(v -> {
-//            dialog.dismiss();
-//            startActivity(new Intent(this, PollActivity.class));
-//        });
-//
+        // ✅ POLL FEATURE ENABLED
+        view.findViewById(R.id.btnAddPoll).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(this, PollActivity.class));
+        });
+
+        // Optional future feature
 //        view.findViewById(R.id.btnOpenDiscussion).setOnClickListener(v -> {
 //            dialog.dismiss();
 //            startActivity(new Intent(this, DiscussionActivity.class));
 //        });
 
         dialog.show();
+    }
+
+    // 🔐 Notification Permission Handler
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_CODE
+                );
+            }
+        }
     }
 }

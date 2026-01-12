@@ -61,7 +61,7 @@ dependencies {
     implementation("com.vanniktech:emoji-google:0.19.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-
+    implementation("com.google.firebase:firebase-messaging:23.4.0")
 
 
 

@@ -6,6 +6,7 @@ import java.util.List;
 public class PostModel {
 
     private String postId;
+    private String userId;          // 🔥 ADD THIS
     private String text;
     private List<String> images;
     private Object timestamp;
@@ -14,12 +15,33 @@ public class PostModel {
 
     public PostModel() {}
 
-    public String getPostId() { return postId; }
-    public void setPostId(String postId) { this.postId = postId; }
+    // 🔑 Post ID (document id)
+    public String getPostId() {
+        return postId;
+    }
+    public void setPostId(String postId) {
+        this.postId = postId;
+    }
 
-    public String getText() { return text; }
-    public List<String> getImages() { return images; }
+    // 👤 Owner ID
+    public String getUserId() {
+        return userId;
+    }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
+    // 📝 Post text
+    public String getText() {
+        return text;
+    }
+
+    // 🖼️ Image URLs (IMGBB)
+    public List<String> getImages() {
+        return images;
+    }
+
+    // ⏱ Timestamp (Long or Firebase Timestamp safe)
     public long getTimestamp() {
         if (timestamp instanceof Long) {
             return (Long) timestamp;
@@ -30,6 +52,13 @@ public class PostModel {
         }
     }
 
-    public int getLikeCount() { return likeCount; }
-    public int getCommentCount() { return commentCount; }
+    // ❤️ Likes
+    public int getLikeCount() {
+        return likeCount;
+    }
+
+    // 💬 Comments
+    public int getCommentCount() {
+        return commentCount;
+    }
 }

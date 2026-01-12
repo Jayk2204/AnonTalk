@@ -1,0 +1,66 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="10dp"
+    android:background="@drawable/poll_option_bg"
+    android:layout_marginTop="6dp"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- Option Text -->
+    <TextView
+        android:id="@+id/tvOptionText"
+        android:textSize="15sp"
+        android:textColor="#111827"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <!-- Percentage + Votes -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/tvPercentage"
+            android:text="0%"
+            android:textSize="12sp"
+            android:textColor="#6B7280"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/tvVotes"
+            android:text="0 votes"
+            android:textSize="12sp"
+            android:textColor="#6B7280"
+            android:layout_marginStart="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <!-- Animated Progress Bar -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="6dp"
+        android:progress="0"
+        android:max="100"
+        android:progressDrawable="@drawable/poll_progress_drawable"
+        android:indeterminate="false"/>
+
+    <!-- Selected Label -->
+    <TextView
+        android:id="@+id/tvSelected"
+        android:text="You voted for this"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#2563EB"
+        android:visibility="gone"
+        android:layout_marginTop="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>

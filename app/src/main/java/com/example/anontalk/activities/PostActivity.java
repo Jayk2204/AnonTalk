@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.anontalk.R;
 import com.example.anontalk.adapters.PostImageAdapter;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.vanniktech.emoji.EmojiPopup;
 
@@ -57,6 +58,7 @@ public class PostActivity extends AppCompatActivity {
     PostImageAdapter imageAdapter;
 
     FirebaseFirestore db;
+    FirebaseAuth auth;
     SharedPreferences prefs;
     EmojiPopup emojiPopup;
 
@@ -74,6 +76,7 @@ public class PostActivity extends AppCompatActivity {
         rvImages = findViewById(R.id.rvImages);
 
         db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
         prefs = getSharedPreferences(DRAFT_PREF, MODE_PRIVATE);
 
         setupRecycler();
@@ -215,8 +218,13 @@ public class PostActivity extends AppCompatActivity {
         }
     }
 
-    // 🔥 SAVE TO FIRESTORE
+    // 🔥 SAVE TO FIRESTORE (FIXED FOR NOTIFICATIONS + RULES)
     private void savePost(String text, ArrayList<String> imageUrls) {
+
+        if (auth.getCurrentUser() == null) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         HashMap<String, Object> map = new HashMap<>();
         map.put("text", text);
@@ -224,6 +232,7 @@ public class PostActivity extends AppCompatActivity {
         map.put("timestamp", System.currentTimeMillis());
         map.put("likeCount", 0);
         map.put("commentCount", 0);
+        map.put("userId", auth.getCurrentUser().getUid()); // 🔥 REQUIRED
 
         db.collection("posts")
                 .add(map)
@@ -259,7 +268,7 @@ public class PostActivity extends AppCompatActivity {
     // 🔥 IMGBB UPLOAD
     private void uploadToImgbb(String base64Image, ArrayList<String> imageUrls, String text) {
 
-        String apiKey = "ede61915513be11f40d19070b26786f2"; // 🔑 Replace with your real key
+        String apiKey = "ede61915513be11f40d19070b26786f2"; // your key
 
         RequestBody body = new FormBody.Builder()
                 .add("key", apiKey)

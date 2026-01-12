@@ -56,10 +56,23 @@
         <activity
             android:name=".activities.PostActivity"
             android:exported="false" />
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+
 
         <!-- COMMENTS -->
         <activity
             android:name=".activities.CommentsActivity"
+            android:exported="false" />
+        <activity android:name=".activities.EditPostActivity"
+android:exported="false"></activity>
+        <activity
+            android:name=".activities.PollActivity"
             android:exported="false" />
 
     </application>
