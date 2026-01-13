@@ -278,11 +278,12 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             }
 
                             // 🗳 Click to vote
-                            if (!isExpired && finalVotedOptionId == null) {
+                            if (!isExpired) {
                                 optView.setOnClickListener(v ->
                                         voteOnPoll(pollId, optionId)
                                 );
                             }
+
 
                             holder.optionsContainer.addView(optView);
                         }
@@ -291,55 +292,88 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     // ==============================
-    // 🔐 ONE USER = ONE VOTE (UNCHANGED)
-    // ==============================
+// 🔁 ALLOW CHANGE VOTE (FIXED)
+// ==============================
     private void voteOnPoll(String pollId, String optionId) {
 
         String uid = auth.getCurrentUser().getUid();
 
-        DocumentReference voteRef = db.collection("polls")
-                .document(pollId)
+        DocumentReference pollRef = db.collection("polls").document(pollId);
+        DocumentReference voteRef = pollRef
                 .collection("votes")
                 .document(uid);
 
         voteRef.get().addOnSuccessListener(snapshot -> {
 
-            if (snapshot.exists()) {
-                Toast.makeText(context, "You already voted", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            DocumentReference pollRef = db.collection("polls").document(pollId);
-            DocumentReference optionRef = pollRef
-                    .collection("options")
-                    .document(optionId);
-
             db.runTransaction(transaction -> {
 
-                DocumentSnapshot optionSnap = transaction.get(optionRef);
-                Long optionVotes = optionSnap.getLong("votes");
-                if (optionVotes == null) optionVotes = 0L;
+                // 🔹 READ ALL REQUIRED DOCUMENTS FIRST
 
                 DocumentSnapshot pollSnap = transaction.get(pollRef);
                 Long totalVotes = pollSnap.getLong("totalVotes");
                 if (totalVotes == null) totalVotes = 0L;
 
-                transaction.update(optionRef, "votes", optionVotes + 1);
-                transaction.update(pollRef, "totalVotes", totalVotes + 1);
+                String oldOptionId = null;
+                if (snapshot.exists()) {
+                    oldOptionId = snapshot.getString("optionId");
+                }
 
+                // If user taps the same option again → do nothing
+                if (oldOptionId != null && oldOptionId.equals(optionId)) {
+                    return null;
+                }
+
+                DocumentReference newOptionRef = pollRef
+                        .collection("options")
+                        .document(optionId);
+
+                DocumentSnapshot newOptionSnap = transaction.get(newOptionRef);
+                Long newVotes = newOptionSnap.getLong("votes");
+                if (newVotes == null) newVotes = 0L;
+
+                DocumentSnapshot oldOptionSnap = null;
+                DocumentReference oldOptionRef = null;
+                Long oldVotes = 0L;
+
+                if (oldOptionId != null) {
+                    oldOptionRef = pollRef
+                            .collection("options")
+                            .document(oldOptionId);
+                    oldOptionSnap = transaction.get(oldOptionRef);
+                    oldVotes = oldOptionSnap.getLong("votes");
+                    if (oldVotes == null) oldVotes = 0L;
+                }
+
+                // 🔹 NOW DO ALL WRITES
+
+                if (oldOptionId != null) {
+                    // 🔽 Decrease old option
+                    transaction.update(oldOptionRef, "votes", Math.max(oldVotes - 1, 0));
+                } else {
+                    // 🆕 First time vote → increase totalVotes
+                    transaction.update(pollRef, "totalVotes", totalVotes + 1);
+                }
+
+                // 🔼 Increase new option
+                transaction.update(newOptionRef, "votes", newVotes + 1);
+
+                // 🧾 Save / update user vote
                 Map<String, Object> voteMap = new HashMap<>();
                 voteMap.put("optionId", optionId);
                 voteMap.put("votedAt", Timestamp.now());
                 transaction.set(voteRef, voteMap);
 
                 return null;
+
             }).addOnSuccessListener(unused ->
-                    Toast.makeText(context, "Vote submitted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Vote updated", Toast.LENGTH_SHORT).show()
             ).addOnFailureListener(e ->
                     Toast.makeText(context, "Vote failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
             );
         });
     }
+
+
 
     // ==============================
     // ❤️ LIKE TOGGLE
