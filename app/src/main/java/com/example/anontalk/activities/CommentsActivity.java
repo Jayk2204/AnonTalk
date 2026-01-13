@@ -1,10 +1,11 @@
 package com.example.anontalk.activities;
 
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,9 +22,9 @@ import java.util.List;
 
 public class CommentsActivity extends AppCompatActivity {
 
-    RecyclerView recyclerView;
+    RecyclerView rvComments;
     EditText etComment;
-    Button btnSend;
+    ImageView btnSend, btnBack;
 
     FirebaseFirestore db;
     List<CommentModel> commentList = new ArrayList<>();
@@ -31,29 +32,37 @@ public class CommentsActivity extends AppCompatActivity {
 
     String postId;
 
-    private static final long COMMENT_COOLDOWN_MS = 10_000; // 10s
+    private static final long COMMENT_COOLDOWN_MS = 10_000; // 10 seconds
     private long lastCommentAt = 0;
 
     @Override
-    protected void onCreate(Bundle b) {
+    protected void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_comments);
 
         postId = getIntent().getStringExtra("postId");
+        if (postId == null) {
+            finish();
+            return;
+        }
 
-        recyclerView = findViewById(R.id.recyclerViewComments);
+        // 🔗 Views
+        rvComments = findViewById(R.id.recyclerViewComments);
         etComment = findViewById(R.id.etComment);
         btnSend = findViewById(R.id.btnSend);
+        btnBack = findViewById(R.id.btnBack);
 
         db = FirebaseFirestore.getInstance();
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        // Recycler
+        rvComments.setLayoutManager(new LinearLayoutManager(this));
         adapter = new CommentAdapter(this, commentList);
-        recyclerView.setAdapter(adapter);
+        rvComments.setAdapter(adapter);
 
         loadComments();
 
         btnSend.setOnClickListener(v -> sendComment());
+        btnBack.setOnClickListener(v -> finish());
     }
 
     // 🔁 REAL-TIME LOAD
@@ -72,7 +81,11 @@ public class CommentsActivity extends AppCompatActivity {
                         model.setCommentId(doc.getId());
                         commentList.add(model);
                     }
+
                     adapter.notifyDataSetChanged();
+                    if (!commentList.isEmpty()) {
+                        rvComments.scrollToPosition(commentList.size() - 1);
+                    }
                 });
     }
 
@@ -81,7 +94,9 @@ public class CommentsActivity extends AppCompatActivity {
         long now = System.currentTimeMillis();
         if (now - lastCommentAt < COMMENT_COOLDOWN_MS) {
             long wait = (COMMENT_COOLDOWN_MS - (now - lastCommentAt)) / 1000;
-            Toast.makeText(this, "Please wait " + wait + "s before commenting again", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,
+                    "Please wait " + wait + "s before commenting again",
+                    Toast.LENGTH_SHORT).show();
             return false;
         }
         lastCommentAt = now;
@@ -90,14 +105,22 @@ public class CommentsActivity extends AppCompatActivity {
 
     // 💬 ADD COMMENT (ATOMIC)
     private void sendComment() {
+
         String comment = etComment.getText().toString().trim();
         if (comment.isEmpty()) return;
         if (!canSendComment()) return;
 
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Toast.makeText(this, "Login required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        DocumentReference postRef = db.collection("posts").document(postId);
-        DocumentReference commentRef = postRef.collection("comments").document();
+        DocumentReference postRef =
+                db.collection("posts").document(postId);
+        DocumentReference commentRef =
+                postRef.collection("comments").document();
 
         db.runTransaction(transaction -> {
 
@@ -117,16 +140,20 @@ public class CommentsActivity extends AppCompatActivity {
 
         }).addOnSuccessListener(unused -> {
             etComment.setText("");
-            Toast.makeText(this, "Comment added", Toast.LENGTH_SHORT).show();
         }).addOnFailureListener(e ->
-                Toast.makeText(this, "Failed to add comment", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,
+                        "Failed to add comment",
+                        Toast.LENGTH_SHORT).show()
         );
     }
 
     // 🗑 DELETE (OWNER ONLY)
     public void deleteComment(String commentId) {
-        DocumentReference postRef = db.collection("posts").document(postId);
-        DocumentReference commentRef = postRef.collection("comments").document(commentId);
+
+        DocumentReference postRef =
+                db.collection("posts").document(postId);
+        DocumentReference commentRef =
+                postRef.collection("comments").document(commentId);
 
         db.runTransaction(transaction -> {
 
@@ -138,25 +165,35 @@ public class CommentsActivity extends AppCompatActivity {
                     ? postSnap.getLong("commentCount") : 0;
 
             transaction.delete(commentRef);
-            transaction.update(postRef, "commentCount", Math.max(count - 1, 0));
+            transaction.update(postRef,
+                    "commentCount", Math.max(count - 1, 0));
             return null;
 
         }).addOnSuccessListener(unused ->
-                Toast.makeText(this, "Comment deleted", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,
+                        "Comment deleted",
+                        Toast.LENGTH_SHORT).show()
         ).addOnFailureListener(e ->
-                Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,
+                        "Delete failed",
+                        Toast.LENGTH_SHORT).show()
         );
     }
 
     // ✏️ EDIT (OWNER ONLY)
     public void editComment(String commentId, String newText) {
-        if (newText == null || newText.trim().isEmpty()) return;
 
-        String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DocumentReference commentRef = db.collection("posts")
-                .document(postId)
-                .collection("comments")
-                .document(commentId);
+        if (newText == null || newText.trim().isEmpty()) return;
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
+
+        String myUid =
+                FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        DocumentReference commentRef =
+                db.collection("posts")
+                        .document(postId)
+                        .collection("comments")
+                        .document(commentId);
 
         db.runTransaction(transaction -> {
 
@@ -164,7 +201,7 @@ public class CommentsActivity extends AppCompatActivity {
             if (!snap.exists()) return null;
 
             String owner = snap.getString("userId");
-            if (!myUid.equals(owner)) throw new RuntimeException("Not your comment");
+            if (!myUid.equals(owner)) return null;
 
             HashMap<String, Object> updates = new HashMap<>();
             updates.put("text", newText);
@@ -174,9 +211,13 @@ public class CommentsActivity extends AppCompatActivity {
             return null;
 
         }).addOnSuccessListener(unused ->
-                Toast.makeText(this, "Comment updated", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,
+                        "Comment updated",
+                        Toast.LENGTH_SHORT).show()
         ).addOnFailureListener(e ->
-                Toast.makeText(this, "Edit failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,
+                        "Edit failed",
+                        Toast.LENGTH_SHORT).show()
         );
     }
 }

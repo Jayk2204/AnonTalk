@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:background="#000000">
+
+    <!-- ANONYMOUS AVATAR -->
+    <ImageView
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_anonymous"
+        android:tint="#9CA3AF"/>
+
+    <!-- INPUT -->
+    <EditText
+        android:id="@+id/etComment"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:hint="Post your reply"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#6B7280"
+        android:background="@null"
+        android:maxLines="4"/>
+
+    <!-- ADD IMAGE -->
+    <ImageView
+        android:id="@+id/btnAddImage"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_marginEnd="10dp"
+        android:src="@drawable/ic_camera"
+        android:tint="#1DA1F2"/>
+
+    <!-- SEND -->
+    <ImageView
+        android:id="@+id/btnSend"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:src="@drawable/ic_send"
+        android:tint="#1DA1F2"/>
+</LinearLayout>

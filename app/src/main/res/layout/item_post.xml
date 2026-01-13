@@ -1,92 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/tools"
-    android:layout_margin="10dp"
-    card_view:cardCornerRadius="12dp"
-    card_view:cardElevation="4dp"
-    card_view:cardUseCompatPadding="true"
-    android:backgroundTint="#121212">
+    android:orientation="vertical"
+    android:layout_marginBottom="20dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:background="#0C0A00">
 
+    <!-- ================= HEADER ================= -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
 
-        <!-- POST TEXT -->
+        <!-- Anonymous icon -->
         <TextView
-            android:id="@+id/tvPostText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Post text here..."
-            android:textSize="16sp"
-            android:textColor="@android:color/white"
-            android:lineSpacingExtra="3dp"
-            android:paddingBottom="8dp"/>
-
-        <TextView
-            android:id="@+id/tvTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="2 min ago"
-            android:textColor="#AAAAAA"
-            android:textSize="12sp"
-            android:paddingBottom="6dp"/>
+            android:text="🕶"
+            android:textSize="14sp"
+            android:layout_marginEnd="6dp"/>
 
-
-        <!-- POST IMAGE -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvPostImages"
-            android:layout_width="match_parent"
+        <!-- Anonymous · Category · Time -->
+        <TextView
+            android:id="@+id/tvHeader"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"/>
-
-
-        <!-- ACTION ROW -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <!-- LIKE -->
-            <ImageView
-                android:id="@+id/btnLike"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_like"
-                app:tint="@color/teal_700"/>
-
-            <TextView
-                android:id="@+id/tvLikes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="@android:color/white"
-                android:paddingStart="6dp"
-                android:paddingEnd="16dp"/>
-
-            <!-- COMMENT -->
-            <ImageView
-                android:id="@+id/btnComment"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_comment"
-                app:tint="@color/teal_700"/>
-
-            <TextView
-                android:id="@+id/tvComments"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="@android:color/white"
-                android:paddingStart="6dp"/>
-        </LinearLayout>
-
+            android:text="Anonymous · Confession · 2h"
+            android:textSize="12.5sp"
+            android:textColor="#9CA3AF"/>
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+    <!-- ================= POST TEXT ================= -->
+    <TextView
+        android:id="@+id/tvPostText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Post content goes here…"
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- ================= IMAGES ================= -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPostImages"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- ================= ACTION BAR ================= -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="6dp">
+
+        <!-- Like -->
+        <ImageView
+            android:id="@+id/btnLike"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_like"
+            android:tint="#9CA3AF"/>
+
+        <TextView
+            android:id="@+id/tvLikes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="12.5sp"
+            android:textColor="#9CA3AF"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="20dp"/>
+
+        <!-- Comment -->
+        <ImageView
+            android:id="@+id/btnComment"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_comment"
+            android:tint="#9CA3AF"/>
+
+        <TextView
+            android:id="@+id/tvComments"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="12.5sp"
+            android:textColor="#9CA3AF"
+            android:layout_marginStart="6dp"/>
+    </LinearLayout>
+
+</LinearLayout>

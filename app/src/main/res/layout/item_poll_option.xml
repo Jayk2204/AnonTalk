@@ -1,66 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="10dp"
-    android:background="@drawable/poll_option_bg"
-    android:layout_marginTop="6dp"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_poll_option">
 
-    <!-- Option Text -->
+    <!-- OPTION TEXT -->
     <TextView
         android:id="@+id/tvOptionText"
-        android:textSize="15sp"
-        android:textColor="#111827"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <!-- Percentage + Votes -->
-    <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp">
+        android:text="Option text"
+        android:textSize="14.5sp"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="6dp"/>
 
-        <TextView
-            android:id="@+id/tvPercentage"
-            android:text="0%"
-            android:textSize="12sp"
-            android:textColor="#6B7280"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:id="@+id/tvVotes"
-            android:text="0 votes"
-            android:textSize="12sp"
-            android:textColor="#6B7280"
-            android:layout_marginStart="8dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-
-    <!-- Animated Progress Bar -->
+    <!-- PROGRESS -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="6dp"
-        android:layout_marginTop="6dp"
         android:progress="0"
         android:max="100"
-        android:progressDrawable="@drawable/poll_progress_drawable"
+        android:progressDrawable="@drawable/bg_poll_progress"
         android:indeterminate="false"/>
 
-    <!-- Selected Label -->
+    <!-- META -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp">
+
+        <TextView
+            android:id="@+id/tvVotes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 votes"
+            android:textSize="12sp"
+            android:textColor="#9CA3AF"/>
+
+        <TextView
+            android:id="@+id/tvPercentage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textSize="12sp"
+            android:textColor="#9CA3AF"/>
+    </LinearLayout>
+
+    <!-- SELECTED -->
     <TextView
         android:id="@+id/tvSelected"
-        android:text="You voted for this"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textColor="#2563EB"
-        android:visibility="gone"
-        android:layout_marginTop="4dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="✓ Your choice"
+        android:textSize="12sp"
+        android:textColor="#22C55E"
+        android:layout_marginTop="4dp"
+        android:visibility="gone"/>
 
 </LinearLayout>

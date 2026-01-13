@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F7F8FA"
+    android:background="#000000"
     android:fillViewport="true">
 
     <LinearLayout
@@ -17,115 +18,113 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Create Poll"
-            android:textSize="22sp"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#111827"
-            android:layout_marginBottom="12dp" />
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="16dp"/>
 
-        <!-- 📝 QUESTION CARD -->
+        <!-- 📝 QUESTION -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_bg"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
+            android:background="#111111"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Poll Question"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:textColor="#374151" />
+                android:textSize="13sp"
+                android:textColor="#888888"/>
 
             <EditText
                 android:id="@+id/etQuestion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Ask something anonymously..."
-                android:layout_marginTop="8dp"
-                android:background="@drawable/edittext_bg"
-                android:padding="12dp"
-                android:textColor="#111827"
-                android:textColorHint="#9CA3AF"
-                android:maxLines="3" />
+                android:hint="Ask something anonymously…"
+                android:layout_marginTop="10dp"
+                android:background="@null"
+                android:paddingVertical="10dp"
+                android:textSize="17sp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#666666"
+                android:maxLines="3"/>
         </LinearLayout>
 
-        <!-- 📋 OPTIONS CARD -->
+        <!-- 📋 OPTIONS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_bg"
-            android:padding="14dp"
-            android:layout_marginBottom="14dp">
+            android:background="#111111"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Options"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:textColor="#374151"
-                android:layout_marginBottom="8dp" />
+                android:textSize="13sp"
+                android:textColor="#888888"
+                android:layout_marginBottom="10dp"/>
 
-            <!-- Dynamic Options Container -->
+            <!-- Dynamic Options -->
             <LinearLayout
                 android:id="@+id/optionsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical"/>
 
-            <!-- ➕ ADD OPTION BUTTON -->
-            <Button
+            <!-- ➕ ADD OPTION -->
+            <TextView
                 android:id="@+id/btnAddOption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="+ Add Option"
-                android:textAllCaps="false"
-                android:background="@android:color/transparent"
-                android:textColor="#2563EB"
-                android:textStyle="bold"/>
-
+                android:text="+ Add option"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#1DA1F2"
+                android:layout_marginTop="14dp"/>
         </LinearLayout>
 
-        <!-- ⏰ EXPIRY INFO -->
+        <!-- ⏰ INFO -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="12dp"
-            android:background="@drawable/info_bg"
-            android:layout_marginBottom="16dp">
+            android:padding="14dp"
+            android:background="#0D1B2A"
+            android:layout_marginBottom="20dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="⏳"
                 android:textSize="16sp"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="This poll will automatically close after 24 hours."
-                android:textSize="13sp"
-                android:textColor="#374151" />
+                android:textSize="12sp"
+                android:textColor="#9CA3AF"/>
         </LinearLayout>
 
-        <!-- 🚀 CREATE POLL BUTTON -->
+        <!-- 🚀 CREATE BUTTON -->
         <Button
             android:id="@+id/btnCreatePoll"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:text="Create Poll"
             android:textAllCaps="false"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
-            android:background="@drawable/btn_primary"
-            android:layout_marginBottom="20dp" />
+            android:background="@drawable/bg_post_button"
+            android:layout_marginBottom="24dp"/>
 
     </LinearLayout>
 

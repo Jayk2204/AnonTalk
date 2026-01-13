@@ -26,6 +26,8 @@ import java.util.Map;
 
 public class PollActivity extends AppCompatActivity {
 
+    private static final int MAX_OPTIONS = 6;
+
     private EditText etQuestion;
     private LinearLayout optionsContainer;
     private Button btnCreatePoll;
@@ -49,33 +51,48 @@ public class PollActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
 
-        // Add two default options
+        // Default 2 options (UX standard)
         addOptionField();
         addOptionField();
 
-        btnAddOption.setOnClickListener(v -> addOptionField());
+        btnAddOption.setOnClickListener(v -> {
+            if (optionInputs.size() >= MAX_OPTIONS) {
+                Toast.makeText(this, "Maximum " + MAX_OPTIONS + " options allowed", Toast.LENGTH_SHORT).show();
+            } else {
+                addOptionField();
+            }
+        });
+
         btnCreatePoll.setOnClickListener(v -> createPoll());
     }
 
-    // ➕ Add unlimited options dynamically
+    // =======================
+    // ➕ ADD OPTION (UI POLISH)
+    // =======================
     private void addOptionField() {
+
         EditText option = new EditText(this);
-        option.setHint("Enter option");
-        option.setBackgroundResource(R.drawable.edittext_bg);
-        option.setPadding(24, 24, 24, 24);
+        option.setHint("Option " + (optionInputs.size() + 1));
+        option.setHintTextColor(getColor(android.R.color.darker_gray));
+        option.setTextColor(getColor(android.R.color.white));
+        option.setBackground(null);
+        option.setPadding(0, 20, 0, 20);
+        option.setTextSize(15f);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0, 16, 0, 0);
+        params.setMargins(0, 12, 0, 0);
         option.setLayoutParams(params);
 
         optionsContainer.addView(option);
         optionInputs.add(option);
     }
 
-    // 🗳 Create Poll in Firestore
+    // =======================
+    // 🗳 CREATE POLL (UNCHANGED LOGIC)
+    // =======================
     private void createPoll() {
 
         String question = etQuestion.getText().toString().trim();
@@ -97,7 +114,9 @@ public class PollActivity extends AppCompatActivity {
             return;
         }
 
-        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "anonymous";
+        String uid = auth.getCurrentUser() != null
+                ? auth.getCurrentUser().getUid()
+                : "anonymous";
 
         // ⏰ Expire after 24 hours
         Calendar cal = Calendar.getInstance();
@@ -119,7 +138,6 @@ public class PollActivity extends AppCompatActivity {
                         Map<String, Object> optMap = new HashMap<>();
                         optMap.put("text", opt);
                         optMap.put("votes", 0);
-
                         pollRef.collection("options").add(optMap);
                     }
 
@@ -132,7 +150,7 @@ public class PollActivity extends AppCompatActivity {
     }
 
     // =======================
-    // 🔐 ONE VOTE PER USER
+    // 🔐 ONE VOTE PER USER (UNCHANGED)
     // =======================
     public void voteOnPoll(String pollId, String optionId) {
 
@@ -143,7 +161,6 @@ public class PollActivity extends AppCompatActivity {
                 .collection("votes")
                 .document(uid);
 
-        // Check if already voted
         voteRef.get().addOnSuccessListener(snapshot -> {
             if (snapshot.exists()) {
                 Toast.makeText(this, "You have already voted", Toast.LENGTH_SHORT).show();
@@ -162,7 +179,6 @@ public class PollActivity extends AppCompatActivity {
 
                 DocumentReference pollRef = db.collection("polls").document(pollId);
 
-                // 🔁 SAFE TRANSACTION
                 db.runTransaction(transaction -> {
 
                     DocumentSnapshot optionSnap = transaction.get(optionRef);
@@ -188,7 +204,7 @@ public class PollActivity extends AppCompatActivity {
     }
 
     // =======================
-    // ⛔ CHECK POLL EXPIRY
+    // ⛔ POLL EXPIRY CHECK (UNCHANGED)
     // =======================
     public boolean isPollExpired(Timestamp expiresAt) {
         return Timestamp.now().compareTo(expiresAt) > 0;

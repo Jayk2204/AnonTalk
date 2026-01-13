@@ -2,12 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
-
+    <!-- PERMISSIONS -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
+        android:name=".MyApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,11 +15,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:name=".MyApp"
-
         android:theme="@style/Theme.AnonTalk"
         tools:targetApi="31">
 
+        <!-- FILE PROVIDER -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -27,10 +26,10 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths"/>
+                android:resource="@xml/provider_paths" />
         </provider>
 
-
+        <!-- SPLASH (LAUNCHER) -->
         <activity
             android:name=".activities.SplashActivity"
             android:exported="true">
@@ -40,18 +39,12 @@
             </intent-filter>
         </activity>
 
-
+        <!-- AUTH -->
         <activity
             android:name=".activities.AuthActivity"
             android:exported="false" />
 
-
-        <!-- AUTH (NOT LAUNCHER) -->
-        <activity
-            android:name=".activities.AuthActivity"
-            android:exported="false" />
-
-        <!-- TERMS & CONDITIONS -->
+        <!-- TERMS -->
         <activity
             android:name=".activities.TermsActivity"
             android:exported="false" />
@@ -70,24 +63,37 @@
         <activity
             android:name=".activities.PostActivity"
             android:exported="false" />
-        <service
-            android:name=".MyFirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
-            </intent-filter>
-        </service>
-
 
         <!-- COMMENTS -->
         <activity
             android:name=".activities.CommentsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- EDIT POST -->
+        <activity
+            android:name=".activities.EditPostActivity"
             android:exported="false" />
-        <activity android:name=".activities.EditPostActivity"
-android:exported="false"></activity>
+
+        <!-- POLL -->
         <activity
             android:name=".activities.PollActivity"
             android:exported="false" />
+
+        <!-- IMAGE VIEWER (🔥 FIX FOR CRASH) -->
+        <activity
+            android:name=".activities.ImageViewerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AnonTalk" />
+
+        <!-- FIREBASE MESSAGING -->
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>

@@ -11,6 +11,7 @@ import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.util.Base64;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,12 +47,13 @@ import okhttp3.Response;
 public class PostActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGES = 101;
+    private static final int REQ_POLL = 201;
     private static final int MAX_CHARS = 500;
     private static final String DRAFT_PREF = "post_draft";
 
     TextInputEditText etPostText;
     TextView tvCounter, btnPost;
-    ImageView btnBack, btnAddImage, btnEmoji;
+    ImageView btnBack, optionImage, optionGif, optionPoll, optionLocation;
     RecyclerView rvImages;
 
     ArrayList<Uri> imageList = new ArrayList<>();
@@ -62,17 +64,26 @@ public class PostActivity extends AppCompatActivity {
     SharedPreferences prefs;
     EmojiPopup emojiPopup;
 
+    // 🔗 Attached extras
+    private String selectedPollId = null;
+    private String selectedLocation = null; // future use
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_post);
 
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        // Views
         etPostText = findViewById(R.id.etPostText);
         tvCounter = findViewById(R.id.tvCounter);
         btnPost = findViewById(R.id.btnPost);
         btnBack = findViewById(R.id.btnBack);
-        btnAddImage = findViewById(R.id.btnAddImage);
-        btnEmoji = findViewById(R.id.btnEmoji);
+        optionImage = findViewById(R.id.optionImage);
+        optionGif = findViewById(R.id.optionGif);
+        optionPoll = findViewById(R.id.optionPoll);
+        optionLocation = findViewById(R.id.optionLocation);
         rvImages = findViewById(R.id.rvImages);
 
         db = FirebaseFirestore.getInstance();
@@ -83,49 +94,101 @@ public class PostActivity extends AppCompatActivity {
         setupEmoji();
         loadDraft();
         setupTextWatcher();
+        updatePostButtonState();
 
-        btnAddImage.setOnClickListener(v -> openGallery());
+        // Clicks
         btnBack.setOnClickListener(v -> finish());
         btnPost.setOnClickListener(v -> uploadPost());
+
+        optionImage.setOnClickListener(v -> openGallery());
+        optionGif.setOnClickListener(v -> toggleEmoji());
+
+        // 📊 Poll
+        optionPoll.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PollActivity.class);
+            startActivityForResult(intent, REQ_POLL);
+        });
+
+        // 📍 Location (future-safe)
+        optionLocation.setOnClickListener(v ->
+                Toast.makeText(this, "Location feature coming soon", Toast.LENGTH_SHORT).show()
+        );
+
+        etPostText.requestFocus();
     }
+
+    // ================= UI HELPERS =================
+
+    private void updatePostButtonState() {
+        boolean enabled = etPostText.getText() != null
+                && etPostText.getText().toString().trim().length() > 0;
+        btnPost.setEnabled(enabled);
+        btnPost.setAlpha(enabled ? 1f : 0.4f);
+    }
+
+    private void updateCounterColor(int length) {
+        if (length >= MAX_CHARS - 20) {
+            tvCounter.setTextColor(getColor(android.R.color.holo_red_light));
+        } else {
+            tvCounter.setTextColor(getColor(android.R.color.darker_gray));
+        }
+    }
+
+    // ================= RECYCLER =================
 
     private void setupRecycler() {
         rvImages.setLayoutManager(
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         imageAdapter = new PostImageAdapter(this, imageList);
         rvImages.setAdapter(imageAdapter);
+        rvImages.setVisibility(View.GONE);
     }
+
+    // ================= EMOJI =================
 
     private void setupEmoji() {
         View rootView = findViewById(R.id.rootLayout);
         emojiPopup = new EmojiPopup(rootView, etPostText);
-
-        btnEmoji.setOnClickListener(v -> {
-            if (emojiPopup.isShowing()) {
-                emojiPopup.dismiss();
-            } else {
-                emojiPopup.show();
-            }
-        });
     }
+
+    private void toggleEmoji() {
+        if (emojiPopup.isShowing()) {
+            emojiPopup.dismiss();
+        } else {
+            emojiPopup.show();
+        }
+    }
+
+    // ================= TEXT WATCHER =================
 
     private void setupTextWatcher() {
         etPostText.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void afterTextChanged(Editable s) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                if (s.length() > MAX_CHARS) {
+                    etPostText.setText(s.subSequence(0, MAX_CHARS));
+                    etPostText.setSelection(MAX_CHARS);
+                    return;
+                }
+
                 tvCounter.setText(s.length() + "/" + MAX_CHARS);
+                updateCounterColor(s.length());
                 highlightHashtags(etPostText.getText());
                 saveDraft();
+                updatePostButtonState();
             }
+
+            @Override public void afterTextChanged(Editable s) {}
         });
     }
 
     private void highlightHashtags(Editable editable) {
         try {
-            ForegroundColorSpan[] spans = editable.getSpans(0, editable.length(), ForegroundColorSpan.class);
+            ForegroundColorSpan[] spans =
+                    editable.getSpans(0, editable.length(), ForegroundColorSpan.class);
             for (ForegroundColorSpan span : spans) {
                 editable.removeSpan(span);
             }
@@ -138,7 +201,6 @@ public class PostActivity extends AppCompatActivity {
                 if (word.startsWith("#")) {
                     int start = index;
                     int end = index + word.length();
-
                     if (start >= 0 && end <= editable.length()) {
                         editable.setSpan(
                                 new ForegroundColorSpan(getColor(R.color.teal_700)),
@@ -155,8 +217,13 @@ public class PostActivity extends AppCompatActivity {
         }
     }
 
+    // ================= GALLERY =================
+
     private void openGallery() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent intent = new Intent(
+                Intent.ACTION_PICK,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        );
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(intent, PICK_IMAGES);
     }
@@ -165,22 +232,33 @@ public class PostActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        // 🖼 Images
         if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
+
             if (data.getClipData() != null) {
                 int count = data.getClipData().getItemCount();
                 for (int i = 0; i < count; i++) {
-                    Uri uri = data.getClipData().getItemAt(i).getUri();
-                    imageList.add(uri);
+                    imageList.add(data.getClipData().getItemAt(i).getUri());
                 }
             } else if (data.getData() != null) {
                 imageList.add(data.getData());
             }
+
             imageAdapter.notifyDataSetChanged();
+            rvImages.setVisibility(View.VISIBLE);
+        }
+
+        // 📊 Poll
+        if (requestCode == REQ_POLL && resultCode == RESULT_OK && data != null) {
+            selectedPollId = data.getStringExtra("pollId");
+            Toast.makeText(this, "Poll attached to post", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // 🔥 MAIN POST LOGIC
+    // ================= POST LOGIC (SAFE) =================
+
     private void uploadPost() {
+
         String text = etPostText.getText().toString().trim();
 
         if (text.isEmpty()) {
@@ -197,20 +275,15 @@ public class PostActivity extends AppCompatActivity {
         }
     }
 
-    // 🔥 MULTI IMAGE UPLOAD
     private void uploadImages(String text) {
         ArrayList<String> imageUrls = new ArrayList<>();
 
-        for (int i = 0; i < imageList.size(); i++) {
-            Uri uri = imageList.get(i);
-
+        for (Uri uri : imageList) {
             try {
                 InputStream inputStream = getContentResolver().openInputStream(uri);
                 byte[] bytes = getBytes(inputStream);
                 String base64Image = Base64.encodeToString(bytes, Base64.DEFAULT);
-
                 uploadToImgbb(base64Image, imageUrls, text);
-
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Image read failed", Toast.LENGTH_SHORT).show();
@@ -218,7 +291,6 @@ public class PostActivity extends AppCompatActivity {
         }
     }
 
-    // 🔥 SAVE TO FIRESTORE (FIXED FOR NOTIFICATIONS + RULES)
     private void savePost(String text, ArrayList<String> imageUrls) {
 
         if (auth.getCurrentUser() == null) {
@@ -232,23 +304,33 @@ public class PostActivity extends AppCompatActivity {
         map.put("timestamp", System.currentTimeMillis());
         map.put("likeCount", 0);
         map.put("commentCount", 0);
-        map.put("userId", auth.getCurrentUser().getUid()); // 🔥 REQUIRED
+        map.put("userId", auth.getCurrentUser().getUid());
+
+        // 🔗 Attach poll if exists
+        if (selectedPollId != null) {
+            map.put("pollId", selectedPollId);
+        }
+
+        // 📍 Future-safe
+        if (selectedLocation != null) {
+            map.put("location", selectedLocation);
+        }
 
         db.collection("posts")
                 .add(map)
-                .addOnSuccessListener(documentReference -> {
+                .addOnSuccessListener(doc -> {
                     clearDraft();
                     Toast.makeText(this, "Post uploaded successfully", Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(PostActivity.this, HomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
+                    startActivity(new Intent(this, HomeActivity.class)
+                            .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));
                     finish();
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Post failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
                 );
     }
+
+    // ================= DRAFT =================
 
     private void saveDraft() {
         prefs.edit().putString("text", etPostText.getText().toString()).apply();
@@ -258,6 +340,7 @@ public class PostActivity extends AppCompatActivity {
         String draft = prefs.getString("text", "");
         if (!draft.isEmpty()) {
             etPostText.setText(draft);
+            etPostText.setSelection(draft.length());
         }
     }
 
@@ -265,10 +348,13 @@ public class PostActivity extends AppCompatActivity {
         prefs.edit().clear().apply();
     }
 
-    // 🔥 IMGBB UPLOAD
-    private void uploadToImgbb(String base64Image, ArrayList<String> imageUrls, String text) {
+    // ================= IMAGE UPLOAD =================
 
-        String apiKey = "ede61915513be11f40d19070b26786f2"; // your key
+    private void uploadToImgbb(String base64Image,
+                               ArrayList<String> imageUrls,
+                               String text) {
+
+        String apiKey = "ede61915513be11f40d19070b26786f2";
 
         RequestBody body = new FormBody.Builder()
                 .add("key", apiKey)
@@ -280,13 +366,13 @@ public class PostActivity extends AppCompatActivity {
                 .post(body)
                 .build();
 
-        OkHttpClient client = new OkHttpClient();
-        client.newCall(request).enqueue(new Callback() {
+        new OkHttpClient().newCall(request).enqueue(new Callback() {
 
             @Override
             public void onFailure(Call call, IOException e) {
                 runOnUiThread(() ->
-                        Toast.makeText(PostActivity.this, "Image upload failed", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(PostActivity.this,
+                                "Image upload failed", Toast.LENGTH_SHORT).show()
                 );
             }
 
@@ -295,14 +381,13 @@ public class PostActivity extends AppCompatActivity {
                 try {
                     String res = response.body().string();
                     JSONObject json = new JSONObject(res);
-                    String imageUrl = json.getJSONObject("data").getString("url");
+                    String imageUrl =
+                            json.getJSONObject("data").getString("url");
 
                     imageUrls.add(imageUrl);
-
                     if (imageUrls.size() == imageList.size()) {
                         runOnUiThread(() -> savePost(text, imageUrls));
                     }
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -312,9 +397,7 @@ public class PostActivity extends AppCompatActivity {
 
     private byte[] getBytes(InputStream inputStream) throws IOException {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
-        int bufferSize = 1024;
-        byte[] buffer = new byte[bufferSize];
-
+        byte[] buffer = new byte[1024];
         int len;
         while ((len = inputStream.read(buffer)) != -1) {
             byteBuffer.write(buffer, 0, len);

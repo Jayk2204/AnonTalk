@@ -24,17 +24,20 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     private List<CommentModel> commentList;
     private String myUid;
 
-    // ✅ CONSTRUCTOR
+    // ✅ CONSTRUCTOR (SAFE)
     public CommentAdapter(Context context, List<CommentModel> commentList) {
         this.context = context;
         this.commentList = commentList;
-        this.myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        this.myUid = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : "";
     }
 
     @NonNull
     @Override
     public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_comment, parent, false);
+        View view = LayoutInflater.from(context)
+                .inflate(R.layout.item_comment, parent, false);
         return new CommentViewHolder(view);
     }
 
@@ -43,20 +46,22 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         CommentModel model = commentList.get(position);
 
-        // 💬 SET COMMENT TEXT
+        // 🧠 HEADER (X-style)
+        String timeAgo = getTimeAgo(model.getTimestamp());
+        holder.tvHeader.setText("Anonymous · " + timeAgo);
+
+        // 💬 COMMENT TEXT
         holder.tvComment.setText(model.getText());
 
-        // 🏷 SHOW "(edited)" LABEL IF EDITED
-        if (model.isEdited()) {
-            holder.tvEdited.setVisibility(View.VISIBLE);
-        } else {
-            holder.tvEdited.setVisibility(View.GONE);
-        }
+        // 🏷 EDITED LABEL
+        holder.tvEdited.setVisibility(model.isEdited()
+                ? View.VISIBLE
+                : View.GONE);
 
-        // 🛑 LONG PRESS → EDIT / DELETE (ONLY FOR OWNER)
+        // 🛑 LONG PRESS → EDIT / DELETE (OWNER ONLY)
         holder.itemView.setOnLongClickListener(v -> {
 
-            if (!model.getUserId().equals(myUid)) return true; // not your comment
+            if (!model.getUserId().equals(myUid)) return true;
 
             String[] options = {"Edit", "Delete"};
 
@@ -65,14 +70,13 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                     .setItems(options, (dialog, which) -> {
 
                         if (which == 0) {
-                            // ✏️ EDIT
                             showEditDialog(model);
-                        } else if (which == 1) {
-                            // 🗑 DELETE
-                            ((CommentsActivity) context)
-                                    .deleteComment(model.getCommentId());
+                        } else {
+                            if (context instanceof CommentsActivity) {
+                                ((CommentsActivity) context)
+                                        .deleteComment(model.getCommentId());
+                            }
                         }
-
                     })
                     .show();
 
@@ -80,8 +84,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         });
     }
 
-    // ✏️ EDIT DIALOG
+    // ✏️ EDIT COMMENT DIALOG (UNCHANGED LOGIC)
     private void showEditDialog(CommentModel model) {
+
         final EditText input = new EditText(context);
         input.setText(model.getText());
         input.setSelection(input.getText().length());
@@ -90,8 +95,11 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 .setTitle("Edit Comment")
                 .setView(input)
                 .setPositiveButton("Update", (dialog, which) -> {
+
                     String newText = input.getText().toString().trim();
-                    if (!newText.isEmpty()) {
+                    if (!newText.isEmpty()
+                            && context instanceof CommentsActivity) {
+
                         ((CommentsActivity) context)
                                 .editComment(model.getCommentId(), newText);
                     }
@@ -105,14 +113,32 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         return commentList.size();
     }
 
+    // ==============================
+    // VIEW HOLDER (UPDATED FOR X-STYLE)
+    // ==============================
     static class CommentViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvComment, tvEdited;
+        TextView tvHeader, tvComment, tvEdited;
 
         public CommentViewHolder(@NonNull View itemView) {
             super(itemView);
+
+            tvHeader = itemView.findViewById(R.id.tvHeader);   // NEW
             tvComment = itemView.findViewById(R.id.tvComment);
-            tvEdited = itemView.findViewById(R.id.tvEdited); // "(edited)" label
+            tvEdited = itemView.findViewById(R.id.tvEdited);
         }
+    }
+
+    // ==============================
+    // ⏱ TIME FORMAT (SAFE)
+    // ==============================
+    private String getTimeAgo(long time) {
+
+        long diff = System.currentTimeMillis() - time;
+
+        if (diff < 60000) return "Just now";
+        if (diff < 3600000) return (diff / 60000) + "m";
+        if (diff < 86400000) return (diff / 3600000) + "h";
+        return (diff / 86400000) + "d";
     }
 }

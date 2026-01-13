@@ -3,35 +3,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:background="#000000">
+
+    <!-- TOP BAR -->
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        layout="@layout/layout_comment_topbaar"/>
+
+    <!-- ORIGINAL POST / POLL PREVIEW -->
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        layout="@layout/layout_comment_parent_post"/>
 
     <!-- COMMENTS LIST -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewComments"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:paddingBottom="72dp"/>
 
-    <!-- INPUT AREA -->
-    <LinearLayout
+    <!-- COMMENT INPUT -->
+    <include
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="6dp">
-
-        <EditText
-            android:id="@+id/etComment"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Write a comment..."
-            android:padding="10dp"/>
-
-        <Button
-            android:id="@+id/btnSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Send"/>
-    </LinearLayout>
+        layout="@layout/layout_comment_input"/>
 
 </LinearLayout>
