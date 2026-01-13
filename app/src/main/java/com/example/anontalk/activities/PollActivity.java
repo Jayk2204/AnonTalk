@@ -2,7 +2,6 @@ package com.example.anontalk.activities;
 
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -16,6 +15,7 @@ import com.example.anontalk.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -28,9 +28,8 @@ public class PollActivity extends AppCompatActivity {
 
     private EditText etQuestion;
     private LinearLayout optionsContainer;
-    private Button  btnCreatePoll;
+    private Button btnCreatePoll;
     private TextView btnAddOption;
-
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -55,7 +54,6 @@ public class PollActivity extends AppCompatActivity {
         addOptionField();
 
         btnAddOption.setOnClickListener(v -> addOptionField());
-
         btnCreatePoll.setOnClickListener(v -> createPoll());
     }
 
@@ -113,12 +111,10 @@ public class PollActivity extends AppCompatActivity {
         pollMap.put("expiresAt", expiresAt);
         pollMap.put("totalVotes", 0);
 
-        // Create poll document
         db.collection("polls")
                 .add(pollMap)
                 .addOnSuccessListener(pollRef -> {
 
-                    // Add options as subcollection
                     for (String opt : options) {
                         Map<String, Object> optMap = new HashMap<>();
                         optMap.put("text", opt);
@@ -138,10 +134,10 @@ public class PollActivity extends AppCompatActivity {
     // =======================
     // 🔐 ONE VOTE PER USER
     // =======================
-    // Call this method when user taps on an option in your adapter
     public void voteOnPoll(String pollId, String optionId) {
 
         String uid = auth.getCurrentUser().getUid();
+
         DocumentReference voteRef = db.collection("polls")
                 .document(pollId)
                 .collection("votes")
@@ -152,34 +148,41 @@ public class PollActivity extends AppCompatActivity {
             if (snapshot.exists()) {
                 Toast.makeText(this, "You have already voted", Toast.LENGTH_SHORT).show();
             } else {
-                // Save vote
+
                 Map<String, Object> voteMap = new HashMap<>();
                 voteMap.put("optionId", optionId);
                 voteMap.put("votedAt", Timestamp.now());
 
                 voteRef.set(voteMap);
 
-                // Increment vote count
                 DocumentReference optionRef = db.collection("polls")
                         .document(pollId)
                         .collection("options")
                         .document(optionId);
 
+                DocumentReference pollRef = db.collection("polls").document(pollId);
+
+                // 🔁 SAFE TRANSACTION
                 db.runTransaction(transaction -> {
-                    Long currentVotes = transaction.get(optionRef).getLong("votes");
+
+                    DocumentSnapshot optionSnap = transaction.get(optionRef);
+                    Long currentVotes = optionSnap.getLong("votes");
                     if (currentVotes == null) currentVotes = 0L;
 
                     transaction.update(optionRef, "votes", currentVotes + 1);
 
-                    DocumentReference pollRef = db.collection("polls").document(pollId);
-                    Long totalVotes = transaction.get(pollRef).getLong("totalVotes");
+                    DocumentSnapshot pollSnap = transaction.get(pollRef);
+                    Long totalVotes = pollSnap.getLong("totalVotes");
                     if (totalVotes == null) totalVotes = 0L;
+
                     transaction.update(pollRef, "totalVotes", totalVotes + 1);
 
                     return null;
-                });
-
-                Toast.makeText(this, "Vote submitted", Toast.LENGTH_SHORT).show();
+                }).addOnSuccessListener(unused ->
+                        Toast.makeText(this, "Vote submitted", Toast.LENGTH_SHORT).show()
+                ).addOnFailureListener(e ->
+                        Toast.makeText(this, "Vote failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
             }
         });
     }

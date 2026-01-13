@@ -183,7 +183,7 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     // ==============================
-    // 🗳 POLL BINDING
+    // 🗳 POLL BINDING (FIXED, LOGIC SAME)
     // ==============================
     private void bindPoll(PollViewHolder holder, PollModel poll) {
 
@@ -208,6 +208,7 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             Long totalVotesObj = pollSnap.getLong("totalVotes");
             if (totalVotesObj == null) totalVotesObj = 0L;
 
+            holder.currentTotalVotes = totalVotesObj; // 🔥 REALTIME STORE
             holder.tvTotalVotes.setText(totalVotesObj + " votes");
         });
 
@@ -253,7 +254,8 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             tvOpt.setText(text);
                             tvVotes.setText(votes + " votes");
 
-                            long totalVotes = poll.getTotalVotes(); // fallback
+                            // 🔥 FIX: model ke old data ke bajay realtime value
+                            long totalVotes = holder.currentTotalVotes;
                             if (totalVotes == 0) {
                                 totalVotes = votes; // avoid divide by zero UI glitch
                             }
@@ -288,11 +290,8 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         });
     }
 
-
-
-
     // ==============================
-    // 🔐 ONE USER = ONE VOTE
+    // 🔐 ONE USER = ONE VOTE (UNCHANGED)
     // ==============================
     private void voteOnPoll(String pollId, String optionId) {
 
@@ -317,21 +316,17 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             db.runTransaction(transaction -> {
 
-                // 🗳 Get option votes
                 DocumentSnapshot optionSnap = transaction.get(optionRef);
                 Long optionVotes = optionSnap.getLong("votes");
                 if (optionVotes == null) optionVotes = 0L;
 
-                // 📊 Get poll total votes
                 DocumentSnapshot pollSnap = transaction.get(pollRef);
                 Long totalVotes = pollSnap.getLong("totalVotes");
                 if (totalVotes == null) totalVotes = 0L;
 
-                // 🔄 Update both
                 transaction.update(optionRef, "votes", optionVotes + 1);
                 transaction.update(pollRef, "totalVotes", totalVotes + 1);
 
-                // 🧾 Save user vote
                 Map<String, Object> voteMap = new HashMap<>();
                 voteMap.put("optionId", optionId);
                 voteMap.put("votedAt", Timestamp.now());
@@ -345,7 +340,6 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             );
         });
     }
-
 
     // ==============================
     // ❤️ LIKE TOGGLE
@@ -433,6 +427,8 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         TextView tvQuestion, tvTotalVotes, tvStatus;
         LinearLayout optionsContainer;
+
+        long currentTotalVotes = 0; // 🔥 REALTIME STORAGE
 
         public PollViewHolder(@NonNull View itemView) {
             super(itemView);
