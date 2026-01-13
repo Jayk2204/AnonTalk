@@ -17,10 +17,10 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.example.anontalk.R;
-import com.google.firebase.database.collection.BuildConfig;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
@@ -38,7 +38,6 @@ public class SplashActivity extends AppCompatActivity {
         icon = findViewById(R.id.imgSplashIcon);
         handler = new Handler(Looper.getMainLooper());
 
-        // 🔥 First check for update
         checkForUpdate();
     }
 
@@ -58,43 +57,57 @@ public class SplashActivity extends AppCompatActivity {
                         return;
                     }
 
-                    long latestVersion = documentSnapshot.getLong("versionCode");
+                    Long latestVersionLong = documentSnapshot.getLong("versionCode");
+                    if (latestVersionLong == null) {
+                        startSplashAnimation();
+                        return;
+                    }
+
+                    long latestVersion = latestVersionLong;
                     String apkUrl = documentSnapshot.getString("apkUrl");
                     boolean force = Boolean.TRUE.equals(documentSnapshot.getBoolean("force"));
                     String changelog = documentSnapshot.getString("changelog");
 
-                    int currentVersion = BuildConfig.VERSION_CODE;
+                    // ✅ NO BuildConfig – SAFE METHOD
+                    int currentVersion = getCurrentVersionCode();
 
-                    if (latestVersion > currentVersion) {
+                    if (latestVersion > currentVersion && apkUrl != null && !apkUrl.isEmpty()) {
                         showUpdateDialog(apkUrl, force, changelog);
                     } else {
                         startSplashAnimation();
                     }
                 })
-                .addOnFailureListener(e -> {
-                    // Agar Firestore fail ho jaye to bhi app chale
-                    startSplashAnimation();
-                });
+                .addOnFailureListener(e -> startSplashAnimation());
     }
 
     // ==========================================
-    // 🔔 UPDATE DIALOG
+    // 🔢 GET APP VERSION CODE (SAFE)
+    // ==========================================
+    private int getCurrentVersionCode() {
+        try {
+            return getPackageManager()
+                    .getPackageInfo(getPackageName(), 0).versionCode;
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+
+    // ==========================================
+    // 🔔 UPDATE DIALOG (FORCE UPDATE)
     // ==========================================
     private void showUpdateDialog(String apkUrl, boolean force, String changelog) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Update Required");
         builder.setMessage("You must update AnonTalk to continue.\n\nWhat's new:\n" + changelog);
-        builder.setCancelable(false);   // 🔒 User back press nahi kar sakta
+        builder.setCancelable(false);
 
         builder.setPositiveButton("Update Now", (dialog, which) -> {
             downloadAndInstallApk(apkUrl);
         });
 
-        // ❌ No "Later" button when force = true
         builder.show();
     }
-
 
     // ==========================================
     // ⬇️ DOWNLOAD APK
@@ -121,7 +134,13 @@ public class SplashActivity extends AppCompatActivity {
                 }
             };
 
-            registerReceiver(receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            // ✅ Android 13+ safe receiver registration
+            ContextCompat.registerReceiver(
+                    this,
+                    receiver,
+                    new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+            );
 
         } catch (Exception e) {
             Toast.makeText(this, "Download failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -153,22 +172,20 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    // 🎬 YOUR ORIGINAL SPLASH ANIMATION (UNCHANGED)
+    // 🎬 SPLASH ANIMATION (UNCHANGED)
     // ==========================================
     private void startSplashAnimation() {
 
-        // Story icons (order matters)
         int[] icons = {
-                R.drawable.ic_talk,          // Talk
-                R.drawable.ic_conffesion,    // Confession
-                R.drawable.ic_dark_humor,    // Dark humor
-                R.drawable.ic_problem,       // Real-life problems
-                R.drawable.ic_splash_logo    // Final AnonTalk logo
+                R.drawable.ic_talk,
+                R.drawable.ic_conffesion,
+                R.drawable.ic_dark_humor,
+                R.drawable.ic_problem,
+                R.drawable.ic_splash_logo
         };
 
         Animation anim = AnimationUtils.loadAnimation(this, R.anim.fade_scale);
-
-        long stepDelay = 400; // ms between each symbol
+        long stepDelay = 400;
 
         for (int i = 0; i < icons.length; i++) {
             int index = i;
@@ -179,7 +196,6 @@ public class SplashActivity extends AppCompatActivity {
             }, i * stepDelay);
         }
 
-        // Move to Auth after full story
         handler.postDelayed(() -> {
             startActivity(new Intent(
                     SplashActivity.this,
@@ -188,5 +204,4 @@ public class SplashActivity extends AppCompatActivity {
             finish();
         }, icons.length * stepDelay + 200);
     }
-
 }

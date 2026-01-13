@@ -17,6 +17,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // 🔥 REQUIRED FOR BuildConfig CLASS
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -40,29 +45,31 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
 
+    // 🔥 REQUIRED FOR ContextCompat.registerReceiver()
+    implementation("androidx.core:core-ktx:1.13.1")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
     implementation("androidx.core:core-splashscreen:1.0.1")
 
-    // 🔥 Firebase (Correct Kotlin DSL)
+    // 🔥 Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-storage")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.google.firebase:firebase-firestore")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
-
-// Emoji (simple emoji popup)
-    implementation("com.vanniktech:emoji-google:0.19.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.firebase:firebase-messaging:23.4.0")
 
+    // Glide
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
+    // Emoji
+    implementation("com.vanniktech:emoji-google:0.19.0")
 
+    // Networking
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }
