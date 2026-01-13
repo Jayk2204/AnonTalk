@@ -7,6 +7,16 @@
     android:paddingVertical="12dp"
     android:background="#000000">
 
+    <!-- HEADER: Anonymous · Time -->
+    <TextView
+        android:id="@+id/tvHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Anonymous · 2m"
+        android:textSize="12sp"
+        android:textColor="#9CA3AF"
+        android:layout_marginBottom="4dp" />
+
     <!-- REPLY TEXT -->
     <TextView
         android:id="@+id/tvComment"
